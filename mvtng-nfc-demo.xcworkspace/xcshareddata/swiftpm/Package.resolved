@@ -19,12 +19,21 @@
       }
     },
     {
+      "identity" : "digest",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leif-ibsen/Digest",
+      "state" : {
+        "revision" : "fd501645c5f14c17207c4ada4281a1e6b7cb03df",
+        "version" : "1.1.0"
+      }
+    },
+    {
       "identity" : "swiftecc",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/leif-ibsen/SwiftECC",
       "state" : {
-        "revision" : "d3f467af127f4e5f1221f73f27a00f0fca240426",
-        "version" : "4.0.0"
+        "revision" : "18c0e462882d0a4fa910472a0a6cc13ef97bbc21",
+        "version" : "5.0.0"
       }
     }
   ],

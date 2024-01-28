@@ -21,7 +21,7 @@ extension NFCISO7816Tag {
             case (_, 0x6C, let len):
                 return try await sendCommand(cls: cls, ins: ins, p1: p1, p2: p2, data: data, le: Int(len))
             case (_, let sw1, let sw2):
-                throw IdCardError.sendCommandFailed(message: String(format: "%02X%02X", sw1, sw2))
+                throw IdCardInternalError.sendCommandFailed(message: String(format: "%02X%02X", sw1, sw2))
             }
         } catch {
             throw error
@@ -36,10 +36,16 @@ extension NFCISO7816Tag {
                let result = TKBERTLVRecord(from: response.value), result.tag == tagExpected {
                 return result
             } else {
-                throw IdCardError.invalidResponse(message: "response conversion failed")
+                throw IdCardInternalError.invalidResponse(message: "response conversion failed")
             }
-        } catch {
-            throw IdCardError.invalidResponse(message: error.localizedDescription)
+        } catch let error as IdCardInternalError {
+            print("sendPaceCommand \(error.localizedDescription)")
+            switch error {
+            case .sendCommandFailed(message: let message):
+                throw IdCardInternalError.invalidResponse(message: message)
+            default:
+                throw error
+            }
         }
     }
 }

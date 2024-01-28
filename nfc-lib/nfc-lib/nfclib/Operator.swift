@@ -7,12 +7,19 @@
 
 import Foundation
 import Security
+import CoreNFC
 
 public enum OperationError: Error {
     case failed(message: String)
 }
 
+public struct SignResult {
+    public let signedData: Data
+    public let signingCertificate: Data
+}
+
 public protocol CardOperations {
+    func isNFCSupported() -> Bool
     func readPublicInfo(CAN: String) async throws -> CardInfo
     func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
     func readSigningCertificate(CAN: String) async throws -> SecCertificate
@@ -25,13 +32,19 @@ public struct Operator {
 }
 
 extension Operator: CardOperations {
+    public func isNFCSupported() -> Bool {
+        NFCTagReaderSession.readingAvailable
+    }
+    
     public func readPublicInfo(CAN: String) async throws -> CardInfo {
         do {
             let result = try await OperationReadPublicData().startReading(CAN: CAN)
             return result
         } catch {
-            print("Read public info error \(error)")
-            throw error
+            guard let e = error as? IdCardInternalError else {
+                fatalError("unhandled type!")
+            }
+            throw e.getIdCardError()
         }
     }
     
@@ -40,8 +53,10 @@ extension Operator: CardOperations {
             let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .auth)
             return cert
         } catch {
-            print("Auth cert reading error \(error)")
-            throw error
+            guard let e = error as? IdCardInternalError else {
+                fatalError("unhandled type!")
+            }
+            throw e.getIdCardError()
         }
     }
 
@@ -50,21 +65,22 @@ extension Operator: CardOperations {
             let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .sign)
             return cert
         } catch {
-            print("Signing cert reading error: \(error)")
-            throw error
+            guard let e = error as? IdCardInternalError else {
+                fatalError("unhandled type!")
+            }
+            throw e.getIdCardError()
         }
     }
 
     public func authenticateWithWebEID(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData {
         do {
             let webEidData = try await OperationAuthenticateWithWebEID(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin).startReading()
-            print("Web-EID cert: \(webEidData.unverifiedCertificate)")
-            print("Web-EID algorithm: \(webEidData.algorithm)")
-            print("Web-EID signature: \(webEidData.signature)")
             return webEidData
         } catch {
-            print("Web-EID error: \(error)")
-            throw error
+            guard let e = error as? IdCardInternalError else {
+                fatalError("unhandled type!")
+            }
+            throw e.getIdCardError()
         }
     }
     
@@ -73,8 +89,10 @@ extension Operator: CardOperations {
             let signature = try await OperationSignHash().startSigning(CAN: CAN, PIN2: pin2, hash: hash)
             return signature
         } catch {
-            print("signing error: \(error)")
-            throw error
+            guard let e = error as? IdCardInternalError else {
+                fatalError("unhandled type!")
+            }
+            throw e.getIdCardError()
         }
     }
 }

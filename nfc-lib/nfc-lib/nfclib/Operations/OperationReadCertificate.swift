@@ -23,7 +23,7 @@ class OperationReadCertificate: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
     private var certUsage: CertificateUsage!
-    private let nfcMessage: String = "Put card against phone"
+    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
     private var continuation: CheckedContinuation<SecCertificate, Error>?
     
     public func startReading(CAN: String, certUsage: CertificateUsage) async throws -> SecCertificate {
@@ -33,7 +33,7 @@ class OperationReadCertificate: NSObject {
 
             guard NFCTagReaderSession.readingAvailable else {
                 // TODO: Handle this case properly
-                continuation.resume(throwing: TagReadingError.nfcNotSupported)
+                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
             
@@ -56,11 +56,11 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
             
             guard let checkedUsage = self.certUsage else {
                 continuation?.resume(throwing: ReadCertificateError.certificateUsageNotSpecified)
-                session.invalidate(errorMessage: "Certificate usage not specified")
+                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 return
             }
             do {
-                session.alertMessage = "Authenticating with card."
+                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
                 let tag = try await NFCConnection().setup(session, tags: tags)
                 if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
                     let idCard = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
@@ -72,12 +72,13 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
                         continuation?.resume(throwing: ReadCertificateError.failedToReadCertificate)
                     }
                     // Done with the session, invalidate
+                    session.alertMessage = "Andmed loetud"
                     session.invalidate()
                 } else {
-                    continuation?.resume(throwing: TagReadingError.couldNotVerifyChipsMAC)
+                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
                 }
             } catch {
-                session.invalidate(errorMessage: "Failed to authenticate with card.")
+                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 continuation?.resume(throwing: error)
             }
         }
@@ -88,12 +89,6 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
     }
     
     public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        if let readerError = error as? NFCReaderError,
-           readerError.code == .readerSessionInvalidationErrorUserCanceled {
-            continuation?.resume(throwing: TagReadingError.cancelledByUser)
-        } else {
-            continuation?.resume(throwing: TagReadingError.sessionInvalidated)
-        }
         self.session = nil
     }
 }

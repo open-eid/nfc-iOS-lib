@@ -2,9 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:nfc-demo/nfc-demo.xcodeproj">
+      location = "group:nfc-lib/nfc-lib/nfclib.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:nfc-lib/nfc-lib/nfclib.xcodeproj">
+      location = "group:mvoting-nfc/nfc-demo.xcodeproj">
    </FileRef>
 </Workspace>

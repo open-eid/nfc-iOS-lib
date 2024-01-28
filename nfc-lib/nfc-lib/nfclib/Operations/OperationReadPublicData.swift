@@ -19,7 +19,7 @@ enum ReadPublicDataError: Error {
 class OperationReadPublicData: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
-    private let nfcMessage: String = "Put card against phone"
+    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<CardInfo, Error>?
 
@@ -29,7 +29,7 @@ class OperationReadPublicData: NSObject {
 
             guard NFCTagReaderSession.readingAvailable else {
                 // TODO: Handle this case properly
-                continuation.resume(throwing: TagReadingError.nfcNotSupported)
+                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
 
@@ -45,7 +45,7 @@ extension OperationReadPublicData: NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task {
             do {
-                session.alertMessage = "Authenticating with card."
+                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
                 let tag = try await connection.setup(session, tags: tags)
                 if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
                     print("Mutual authentication successfull")
@@ -68,15 +68,16 @@ extension OperationReadPublicData: NFCTagReaderSessionDelegate {
                                                 citizenship: citizenship,
                                                 dateOfExpiry: dateOfExpiry)
                         continuation?.resume(with: .success(cardInfo))
+                        session.alertMessage = "Andmed loetud"
                         session.invalidate()
                     } catch {
                         continuation?.resume(throwing: error)
                     }
                 } else {
-                    continuation?.resume(throwing: TagReadingError.couldNotVerifyChipsMAC)
+                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
                 }
             } catch {
-                session.invalidate(errorMessage: "Failed to authenticate with card.")
+                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 continuation?.resume(throwing: error)
             }
         }
@@ -89,12 +90,6 @@ extension OperationReadPublicData: NFCTagReaderSessionDelegate {
     }
 
     public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        if let readerError = error as? NFCReaderError,
-           readerError.code == .readerSessionInvalidationErrorUserCanceled {
-            continuation?.resume(throwing: TagReadingError.cancelledByUser)
-        } else {
-            continuation?.resume(throwing: TagReadingError.sessionInvalidated)
-        }
         self.session = nil
     }
 }

@@ -24,7 +24,7 @@ extension DataProtocol where Self.Index == Int {
                 return self[0..<i]
             }
         }
-        throw IdCardError.dataPaddingError
+        throw IdCardInternalError.dataPaddingError
     }
 }
 
