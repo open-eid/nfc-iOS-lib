@@ -52,7 +52,7 @@ class AES {
                 }
             }
             if status != kCCSuccess {
-                throw RuntimeError(msg: "AES.CBC.Error")
+                throw IdCardInternalError.AESCBCError
             }
             return Bytes(outputBuffer.prefix(bytesWritten))
         }

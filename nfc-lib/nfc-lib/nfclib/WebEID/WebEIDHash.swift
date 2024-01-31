@@ -8,7 +8,7 @@
 import Foundation
 import CommonCrypto
 
-public enum HashLength: Int {
+enum HashLength: Int {
     case bits256 = 256
     case bits384 = 384
     case bits512 = 512
@@ -18,7 +18,7 @@ func hashLengthFromInt(_ intValue: Int) -> HashLength? {
     return HashLength(rawValue: intValue)
 }
 
-public func sha(hashLength: HashLength, data: Data) -> Data? {
+func sha(hashLength: HashLength, data: Data) -> Data? {
     var hash: [UInt8]
     
     switch hashLength {

@@ -248,7 +248,7 @@ extension ContentView {
 
         func authenticate(can: String, pin1: String, challenge: String, origin: String) async {
             do {
-                let webEidResult = try await cardOperator.authenticateWithWebEID(CAN: can, pin1: pin1, challenge: challenge, origin: origin)
+                let webEidResult = try await cardOperator.loadWebEIDAuthenticationData(CAN: can, pin1: pin1, challenge: challenge, origin: origin)
                 self.webEidData = webEidResult
             } catch {
                 // Handle error here

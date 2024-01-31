@@ -12,8 +12,62 @@ import CryptoTokenKit
 import SwiftECC
 import BigInt
 
-struct RuntimeError: Error {
-    let msg: String
+public enum IdCardError: Error {
+    case wrongCAN,
+         wrongPIN(triesLeft: Int),
+         sessionError
+}
+
+enum IdCardInternalError: Error {
+    case missingRESTag,
+         missingMACTag,
+         invalidMACValue,
+         failedReadingField(CardField),
+         hexConversionFailed,
+         AESCBCError,
+         sendCommandFailed(message: String),
+         invalidResponse(message: String),
+         pinVerificationFailed,
+         remainingPinRetryCount(Int),
+         dataPaddingError,
+         authenticationFailed,
+         canAuthenticationFailed,
+         invalidTag,
+         nfcNotSupported,
+         connectionFailed,
+         multipleTagsDetected,
+         couldNotVerifyChipsMAC,
+         cancelledByUser,
+        sessionInvalidated
+
+    func getIdCardError() -> IdCardError {
+        switch self {
+        case .missingRESTag,
+                .missingMACTag,
+                .invalidMACValue,
+                .failedReadingField,
+                .hexConversionFailed,
+                .AESCBCError,
+                .sendCommandFailed,
+                .dataPaddingError,
+                .invalidResponse,
+                .authenticationFailed,
+                .invalidTag,
+                .nfcNotSupported,
+                .connectionFailed,
+                .multipleTagsDetected,
+                .couldNotVerifyChipsMAC,
+                .cancelledByUser,
+                .sessionInvalidated:
+            return .sessionError
+        case .canAuthenticationFailed:
+            return .wrongCAN
+        case .pinVerificationFailed:
+            return .wrongPIN(triesLeft: 0)
+        case .remainingPinRetryCount(let value):
+            return .wrongPIN(triesLeft: value)
+        }
+    }
 }
 
 struct PinError: Error {
@@ -98,7 +152,6 @@ enum CardField: Int {
 }
 
 public class NFCIdCard : NSObject {
-
     private let ksEnc: Bytes?
     private let ksMac: Bytes?
     private var SSC: Bytes?
@@ -136,38 +189,42 @@ public class NFCIdCard : NSObject {
         let DO8E = TKBERTLVRecord(tag: 0x8E, bytes: mac).data
         let send = DO87 + DO97 + DO8E
         print(">: \(send.toHex)")
-        let response = try await tag.sendCommand(cls: cmd_header[0], ins: ins, p1: p1, p2: p2, data: send, le: 256)
-        print("<: \(response.toHex)")
-        var tlvEnc: TKTLVRecord?
-        var tlvRes: TKTLVRecord?
-        var tlvMac: TKTLVRecord?
-        for tlv in TKBERTLVRecord.sequenceOfRecords(from: response)! {
-            switch tlv.tag {
-            case 0x87: tlvEnc = tlv
-            case 0x99: tlvRes = tlv
-            case 0x8E: tlvMac = tlv
-            default: print("Unknown tag")
+        do {
+            let response = try await tag.sendCommand(cls: cmd_header[0], ins: ins, p1: p1, p2: p2, data: send, le: 256)
+            print("<: \(response.toHex)")
+            var tlvEnc: TKTLVRecord?
+            var tlvRes: TKTLVRecord?
+            var tlvMac: TKTLVRecord?
+            for tlv in TKBERTLVRecord.sequenceOfRecords(from: response)! {
+                switch tlv.tag {
+                case 0x87: tlvEnc = tlv
+                case 0x99: tlvRes = tlv
+                case 0x8E: tlvMac = tlv
+                default: print("Unknown tag")
+                }
             }
+            guard tlvRes != nil else {
+                throw IdCardInternalError.missingRESTag
+            }
+            guard tlvMac != nil else {
+                throw IdCardInternalError.missingMACTag
+            }
+            let K = SSC!.increment() + (tlvEnc?.data ?? Data()) + tlvRes!.data
+            if try Data(AES.CMAC(key: ksMac!).authenticate(bytes: K.addPadding(), count: 8)) != tlvMac!.value {
+                throw IdCardInternalError.invalidMACValue
+            }
+            if tlvRes!.value != Data([0x90, 0x00]) {
+                throw IdCardInternalError.hexConversionFailed
+            }
+            guard tlvEnc != nil else {
+                return Data()
+            }
+            let iv = try AES.CBC(key: ksEnc!, iv: AES.Zero).encrypt(SSC!)
+            let responseData = try AES.CBC(key: ksEnc!, iv: iv).decrypt(tlvEnc!.value[1...])
+            return Data(try responseData.removePadding())
+        } catch {
+            throw error
         }
-        guard tlvRes != nil else {
-            throw RuntimeError(msg: "Missing RES tag")
-        }
-        guard tlvMac != nil else {
-            throw RuntimeError(msg: "Missing MAC tag")
-        }
-        let K = SSC!.increment() + (tlvEnc?.data ?? Data()) + tlvRes!.data
-        if try Data(AES.CMAC(key: ksMac!).authenticate(bytes: K.addPadding(), count: 8)) != tlvMac!.value {
-            throw RuntimeError(msg: "Invalid MAC value")
-        }
-        if tlvRes!.value != Data([0x90, 0x00]) {
-            throw RuntimeError(msg: "\(tlvRes!.value.toHex)")
-        }
-        guard tlvEnc != nil else {
-            return Data()
-        }
-        let iv = try AES.CBC(key: ksEnc!, iv: AES.Zero).encrypt(SSC!)
-        let responseData = try AES.CBC(key: ksEnc!, iv: iv).decrypt(tlvEnc!.value[1...])
-        return Data(try responseData.removePadding())
     }
     
     func selectFile(tag: NFCISO7816Tag, file: Data) async throws {
@@ -200,7 +257,7 @@ public class NFCIdCard : NSObject {
         print("Selected field: \(field)")
         let output = try await readBinaryMod(tag: tag)
         guard let textValue = String(data: output, encoding: .utf8) else {
-            throw(RuntimeError(msg: "Unable to read \(field)"))
+            throw IdCardInternalError.failedReadingField(field)
         }
         print("selected value: \(textValue)")
         return textValue
@@ -255,14 +312,15 @@ public class NFCIdCard : NSObject {
         let paddedPin = padPin(inputData: pin1)
         do {
             _ = try await sendWrapped(tag: tag, cls: 0x00, ins: 0x20, p1: 0x00, p2: pinType.data, data: paddedPin, le: 256)
-        } catch let error as RuntimeError {
-            print("Error in verify PIN: \(error)")
-            if let pinCount = try getCountFromError(error) {
-                print("Remaining PIN count: \(pinCount)")
-                throw PinError(msg: "PIN invalid", remainingCount: pinCount)
-            } else {
-                throw error
+        } catch let error as IdCardInternalError {
+            if case .sendCommandFailed(message: let message) = error {
+                if let pinCount = try getCountFromError(message) {
+                    throw PinError(msg: message, remainingCount: pinCount)
+                }
             }
+            throw error
+        } catch {
+            throw error
         }
     }
     
@@ -277,14 +335,14 @@ public class NFCIdCard : NSObject {
         return paddedData
     }
     
-    func getCountFromError(_ error: RuntimeError) throws -> Int? {
-        guard let data = hexStringToData(error.msg) else {
-            throw error
+    func getCountFromError(_ errorMessage: String) throws -> Int? {
+        guard let data = hexStringToData(errorMessage) else {
+            throw IdCardInternalError.pinVerificationFailed
         }
         
         // Check if the data has at least two bytes
         guard data.count >= 2 else {
-            return nil
+            throw IdCardInternalError.pinVerificationFailed
         }
 
         // Check if the first byte is 0x63
@@ -296,18 +354,43 @@ public class NFCIdCard : NSObject {
             if (0xC0...0xCF).contains(secondByte) {
                 // Extract the count from the lower 4 bits
                 let count = Int(secondByte & 0x0F)
-                return count
+                throw IdCardInternalError.remainingPinRetryCount(count)
             } else {
-                throw error
+                throw IdCardInternalError.pinVerificationFailed
             }
-        } else if data[0] == 0x69 && data[1] == 0x83 {
-            // If the first byte is 0x69 and the second byte is 0x83, throw an error
-            return 0
         } else {
-            throw error
+            throw IdCardInternalError.pinVerificationFailed
         }
     }
-    
+
+    func getPinError(_ errorMessage: String) -> IdCardInternalError? {
+        guard let data = hexStringToData(errorMessage) else {
+            return IdCardInternalError.pinVerificationFailed
+        }
+
+        // Check if the data has at least two bytes
+        guard data.count >= 2 else {
+            return IdCardInternalError.pinVerificationFailed
+        }
+
+        // Check if the first byte is 0x63
+        if data[0] == 0x63 {
+            // Extract the second byte
+            let secondByte = data[1]
+
+            // Check if the second byte is in the form of 0xCX
+            if (0xC0...0xCF).contains(secondByte) {
+                // Extract the count from the lower 4 bits
+                let count = Int(secondByte & 0x0F)
+                return IdCardInternalError.remainingPinRetryCount(count)
+            } else {
+                return IdCardInternalError.pinVerificationFailed
+            }
+        } else {
+            return IdCardInternalError.pinVerificationFailed
+        }
+    }
+
     func hexStringToData(_ hexString: String) -> Data? {
         var hex = hexString
         // Ensure the hex string has an even number of characters

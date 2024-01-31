@@ -41,30 +41,30 @@ class OperationAuthenticateWithWebEID: NSObject {
             self.continuation = continuation
             guard NFCTagReaderSession.readingAvailable else {
                 // TODO: Handle this case properly
-                continuation.resume(throwing: TagReadingError.nfcNotSupported)
+                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
             // TODO: Use a proper message that is localised
-            session?.alertMessage = "Put card against phone"
+            session?.alertMessage = "Palun asetage oma ID-kaart vastu nutiseadet."
             session?.begin()
         }
     }
 }
 
 extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
-    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task {
             defer {
                 self.session = nil
             }
 
             do {
-                session.alertMessage = "Authenticating with card."
+                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
                 let tag = try await NFCConnection().setup(session, tags: tags)
                 guard let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) else {
                     let errorMessage = "Could not verify chip's MAC."
-                    continuation?.resume(throwing: TagReadingError.couldNotVerifyChipsMAC)
+                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
                     session.invalidate(errorMessage: errorMessage)
                     return
                 }
@@ -77,7 +77,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
 
                     guard let publicKey = SecCertificateCopyKey(x509Certificate) else {
                         // TODO: Failed to process public key, handle error
-                        let errorMessage = "Failed to read public key"
+                        let errorMessage = "Andmete lugemine ebaõnnestus"
                         session.invalidate(errorMessage: errorMessage)
                         continuation?.resume(throwing: AuthenticateWithWebEidError.failedToReadPublicKey)
                         return
@@ -85,7 +85,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
 
                     guard let algorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
                         // TODO: Implement error handling
-                        let errorMessage = "Failed to determine alg"
+                        let errorMessage = "Andmete lugemine ebaõnnestus"
                         session.invalidate(errorMessage: errorMessage)
                         continuation?.resume(throwing: AuthenticateWithWebEidError.failedToDetermineAlgorithm)
                         return
@@ -98,7 +98,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                           let challengeHash = sha(hashLength: hashLength, data: challengeData),
                           let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash),
                           let pin1Data = self.pin1.data(using: .utf8) else {
-                        let errorMessage = "Failed to hash data"
+                        let errorMessage = "Andmete lugemine ebaõnnestus"
                         session.invalidate(errorMessage: errorMessage)
                         continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
                         return
@@ -109,28 +109,32 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
 
                         // TODO: Encapsulate the result and publish it
                         guard let webEidAlg = mapToAlgorithm(algorithm: algorithmData.algorithm, bitLength: algorithmData.keyLength) else {
-                            let errorMessage = "Failed to map algorithm"
+                            let errorMessage = "Andmete lugemine ebaõnnestus"
                             session.invalidate(errorMessage: errorMessage)
                             continuation?.resume(throwing: AuthenticateWithWebEidError.failedToMapAlgorithm)
                             return
                         }
-
+                        let signingCertificate = try await idCard.readCert(tag: tag, usage: .sign).base64EncodedString()
                         let webEidData = WebEidData(unverifiedCertificate: certBytes.base64EncodedString(),
                                                     algorithm: webEidAlg,
-                                                    signature: authResult.base64EncodedString())
+                                                    signature: authResult.base64EncodedString(),
+                                                    signingCertificate: signingCertificate)
                         continuation?.resume(returning: webEidData)
+                        session.alertMessage = "Andmed loetud"
+                        session.invalidate()
                     } catch {
+                        session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                         continuation?.resume(throwing: error)
                     }
                 } catch {
+                    session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                     continuation?.resume(throwing: error)
                 }
                 // Done with the session, invalidate
-                session.invalidate()
             } catch {
                 continuation?.resume(throwing: error)
             }
-            session.invalidate(errorMessage: "Failed to authenticate with card.")
+            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
         }
     }
     
@@ -159,17 +163,11 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
         }
     }
     
-    public func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
+    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
         // TODO: Anyhing we want to do here?
     }
     
-    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        if let readerError = error as? NFCReaderError,
-           readerError.code == .readerSessionInvalidationErrorUserCanceled {
-            continuation?.resume(throwing: TagReadingError.cancelledByUser)
-        } else {
-            continuation?.resume(throwing: TagReadingError.sessionInvalidated)
-        }
+    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
         self.session = nil
     }
 

@@ -10,8 +10,8 @@
 		1319EBC72B330D1500F69C0E /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1319EBC62B330D1500F69C0E /* Logging.swift */; };
 		1319EBC92B330D8E00F69C0E /* Digest+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1319EBC82B330D8E00F69C0E /* Digest+Extensions.swift */; };
 		1319EBCB2B33209400F69C0E /* NFCConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1319EBCA2B33209400F69C0E /* NFCConnection.swift */; };
+		133C3AC22B4D95A9006F9DBD /* SwiftECC in Frameworks */ = {isa = PBXBuildFile; productRef = 133C3AC12B4D95A9006F9DBD /* SwiftECC */; settings = {ATTRIBUTES = (Required, ); }; };
 		1372864F2B15AC260025D06F /* NFCIdCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1372864E2B15AC260025D06F /* NFCIdCard.swift */; };
-		137286522B15AEAA0025D06F /* SwiftECC in Frameworks */ = {isa = PBXBuildFile; productRef = 137286512B15AEAA0025D06F /* SwiftECC */; };
 		137957B82B0329890065716E /* nfclib.h in Headers */ = {isa = PBXBuildFile; fileRef = 137957B72B0329890065716E /* nfclib.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		137A26112B32ADF2007503EE /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 137A26102B32ADF2007503EE /* Data+Extensions.swift */; };
 		139965AB2B182C6F00D632C8 /* DataProtocol+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965AA2B182C6F00D632C8 /* DataProtocol+Extension.swift */; };
@@ -24,6 +24,7 @@
 		139965BC2B18360D00D632C8 /* OperationAuthenticate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965BB2B18360D00D632C8 /* OperationAuthenticate.swift */; };
 		139965BE2B18365F00D632C8 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965BD2B18365F00D632C8 /* Utilities.swift */; };
 		13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */; };
+		13B950452B6A6715002580B2 /* CardOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B950442B6A6715002580B2 /* CardOperations.swift */; };
 		5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */; };
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
@@ -48,6 +49,7 @@
 		139965BB2B18360D00D632C8 /* OperationAuthenticate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticate.swift; sourceTree = "<group>"; };
 		139965BD2B18365F00D632C8 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationSignHash.swift; sourceTree = "<group>"; };
+		13B950442B6A6715002580B2 /* CardOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardOperations.swift; sourceTree = "<group>"; };
 		5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEidData.swift; sourceTree = "<group>"; };
 		5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticateWithWebEID.swift; sourceTree = "<group>"; };
 		5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEIDHash.swift; sourceTree = "<group>"; };
@@ -59,7 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				137286522B15AEAA0025D06F /* SwiftECC in Frameworks */,
+				133C3AC22B4D95A9006F9DBD /* SwiftECC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -102,6 +104,7 @@
 				5A61B2862B285B8500694DA5 /* WebEID */,
 				137957B72B0329890065716E /* nfclib.h */,
 				139965B72B18348000D632C8 /* Operator.swift */,
+				13B950442B6A6715002580B2 /* CardOperations.swift */,
 				1372864E2B15AC260025D06F /* NFCIdCard.swift */,
 				139965B52B182FAA00D632C8 /* Utilities */,
 				139965B42B182F9D00D632C8 /* Extensions */,
@@ -178,7 +181,7 @@
 			);
 			name = nfclib;
 			packageProductDependencies = (
-				137286512B15AEAA0025D06F /* SwiftECC */,
+				133C3AC12B4D95A9006F9DBD /* SwiftECC */,
 			);
 			productName = "nfc-lib";
 			productReference = 137957B42B0329890065716E /* nfclib.framework */;
@@ -209,7 +212,7 @@
 			);
 			mainGroup = 137957AA2B0329890065716E;
 			packageReferences = (
-				137286502B15AEAA0025D06F /* XCRemoteSwiftPackageReference "SwiftECC" */,
+				133C3AC02B4D95A9006F9DBD /* XCRemoteSwiftPackageReference "SwiftECC" */,
 			);
 			productRefGroup = 137957B52B0329890065716E /* Products */;
 			projectDirPath = "";
@@ -252,6 +255,7 @@
 				137A26112B32ADF2007503EE /* Data+Extensions.swift in Sources */,
 				5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */,
 				1319EBC92B330D8E00F69C0E /* Digest+Extensions.swift in Sources */,
+				13B950452B6A6715002580B2 /* CardOperations.swift in Sources */,
 				139965BA2B18351400D632C8 /* OperationReadPublicData.swift in Sources */,
 				139965AB2B182C6F00D632C8 /* DataProtocol+Extension.swift in Sources */,
 			);
@@ -389,10 +393,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 58L39YKB7N;
+				DEVELOPMENT_TEAM = 5YYXE2JG54;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -400,7 +405,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -409,8 +414,9 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = "mobi.lab.nfc-lib";
+				PRODUCT_BUNDLE_IDENTIFIER = "ee.eesti.rvt.mvoting.nfc-lib";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -423,10 +429,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEFINES_MODULE = YES;
-				DEVELOPMENT_TEAM = 58L39YKB7N;
+				DEVELOPMENT_TEAM = 5YYXE2JG54;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -434,7 +441,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -443,8 +450,9 @@
 				MARKETING_VERSION = 1.0;
 				MODULE_VERIFIER_SUPPORTED_LANGUAGES = "objective-c objective-c++";
 				MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS = "gnu17 gnu++20";
-				PRODUCT_BUNDLE_IDENTIFIER = "mobi.lab.nfc-lib";
+				PRODUCT_BUNDLE_IDENTIFIER = "ee.eesti.rvt.mvoting.nfc-lib";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -476,20 +484,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		137286502B15AEAA0025D06F /* XCRemoteSwiftPackageReference "SwiftECC" */ = {
+		133C3AC02B4D95A9006F9DBD /* XCRemoteSwiftPackageReference "SwiftECC" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/leif-ibsen/SwiftECC";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
+				minimumVersion = 5.1.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		137286512B15AEAA0025D06F /* SwiftECC */ = {
+		133C3AC12B4D95A9006F9DBD /* SwiftECC */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 137286502B15AEAA0025D06F /* XCRemoteSwiftPackageReference "SwiftECC" */;
+			package = 133C3AC02B4D95A9006F9DBD /* XCRemoteSwiftPackageReference "SwiftECC" */;
 			productName = SwiftECC;
 		};
 /* End XCSwiftPackageProductDependency section */
