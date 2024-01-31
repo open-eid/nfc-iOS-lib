@@ -3,6 +3,7 @@
 - [Integreerimise juhed](#integreerimise-juhend)
   - [Teegi ehitamine](#teegi-ehitamine)
   - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
+- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id---kaardiga-suhtluseks)
 - [Arhitektuursed eesmärgid - kontekst, eeldused ja sõltuvused](#arhitektuursed-eesmärgid---kontekst-eeldused-ja-sõltuvused)
 - [Arhitektuurselt olulised nõudmised](#arhitektuurselt-olulised-nõudmised)
   - [Isikuandmete lugemine](#Isikuandmete-lugemine)
@@ -59,6 +60,29 @@ Eesmärk on ehitada .framework failikogumik, mida saab lisata sõltuvusena teist
 - Vajutada + -> Add Other... -> Add Files -> Valida nfclib.framework
 
 Nüüd on nfc teek rakendusse integreeritud.
+
+# Teegi liidesed id-kaardiga suhtluseks
+Kõik avalikud operatsioonid on kirjeldatud `CardOperations` protokollis.
+
+Järgnevalt on nimetatud operatsioonid, mida teek võimaldab.
+
+Tagastab, kas NFC on seadmel toetatud.
+`public func isNFCSupported() -> Bool`
+
+Loeb asünkroonselt kaardilt avalikku teavet kaardi omaniku kohta
+`public func readPublicInfo(CAN: String) async throws -> CardInfo`
+
+Loeb asünkroonselt kaardilt autentimise sertifikaadi.
+`public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate`
+
+Loeb asünkroonselt kaardilt allkirjastamise sertifikaadi.
+`public func readSigningCertificate(CAN: String) async throws -> SecCertificate`
+
+Hangib andmeid WebEID autentimiseks, kasutades antud volikirju ja väljakutset.
+`public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData`
+
+Viib läbi allkirjastamise operatsiooni, kasutades eelnevalt arvutatud räsi (toetatud on ainult SHA-384) ja PIN-koodi
+`public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data`
 
 # Arhitektuursed eesmärgid - kontekst, eeldused ja sõltuvused 
 
