@@ -1,6 +1,8 @@
 - [Ülevaade](#ülevaade)
 - [Demorakenduse jooksutamise juhed](#demorakenduse-jooksutamise-juhend)
 - [Integreerimise juhed](#integreerimise-juhend)
+  - [Teegi ehitamine](#teegi-ehitamine)
+  - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
 - [Arhitektuursed eesmärgid - kontekst, eeldused ja sõltuvused](#arhitektuursed-eesmärgid---kontekst-eeldused-ja-sõltuvused)
 - [Arhitektuurselt olulised nõudmised](#arhitektuurselt-olulised-nõudmised)
   - [Isikuandmete lugemine](#Isikuandmete-lugemine)
@@ -33,10 +35,30 @@ NFC-ID teek ei ole mõeldud avalikuks kasutamiseks. Tegemist on tehnilise taseme
 NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-kaarti m valijarakenduses. 
 
 # Demorakenduse jooksutamise juhed
-Siia tuleb õpetus, kuidas demorakendust jooksutada
+- Ava mvtng-nfc-demo.xcworkspace
+- Oota, kuni Swift Package Manager'i sõltuvused laetakse alla
+- Product -> Run
+
+Simulaator pole toetatud, sest simulaatoril puudub NFC tugi.
 
 # Integreerimise juhed
-Juhend, kuidas see teek teise rakendusse sõltuvusena integreerida
+Eesmärk on ehitada .framework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
+
+### Teegi ehitamine
+- Ava nfclib.xcodeproj
+- Product -> Build
+  - Selle tagajärjel ilmub xCode'i kaustapuu vaates Products kausta alla nfclib framework.
+- Parem klikk -> Show in Finder
+  - See avab failisüsteemis kausta, kus on nfclib.framework
+
+### Teegi lisamine rakendusse
+- Ava projekt, kuhu soovid integreerida nfclib teegi
+- Vali projekt ja TARGETS menüü all õige programm
+- Selle tagajärjel peaks olema nähtav General osa sihtprogrammi kohta
+- Otsida Frameworks and Libraries
+- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.framework
+
+Nüüd on nfc teek rakendusse integreeritud.
 
 # Arhitektuursed eesmärgid - kontekst, eeldused ja sõltuvused 
 

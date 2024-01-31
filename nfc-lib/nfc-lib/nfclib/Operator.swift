@@ -9,22 +9,9 @@ import Foundation
 import Security
 import CoreNFC
 
-public enum OperationError: Error {
-    case failed(message: String)
-}
-
 public struct SignResult {
     public let signedData: Data
     public let signingCertificate: Data
-}
-
-public protocol CardOperations {
-    func isNFCSupported() -> Bool
-    func readPublicInfo(CAN: String) async throws -> CardInfo
-    func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
-    func readSigningCertificate(CAN: String) async throws -> SecCertificate
-    func authenticateWithWebEID(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData
-    func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
 }
 
 public struct Operator {
@@ -42,7 +29,7 @@ extension Operator: CardOperations {
             return result
         } catch {
             guard let e = error as? IdCardInternalError else {
-                fatalError("unhandled type!")
+                throw IdCardError.sessionError
             }
             throw e.getIdCardError()
         }
@@ -54,7 +41,7 @@ extension Operator: CardOperations {
             return cert
         } catch {
             guard let e = error as? IdCardInternalError else {
-                fatalError("unhandled type!")
+                throw IdCardError.sessionError
             }
             throw e.getIdCardError()
         }
@@ -66,19 +53,19 @@ extension Operator: CardOperations {
             return cert
         } catch {
             guard let e = error as? IdCardInternalError else {
-                fatalError("unhandled type!")
+                throw IdCardError.sessionError
             }
             throw e.getIdCardError()
         }
     }
 
-    public func authenticateWithWebEID(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData {
+    public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData {
         do {
             let webEidData = try await OperationAuthenticateWithWebEID(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin).startReading()
             return webEidData
         } catch {
             guard let e = error as? IdCardInternalError else {
-                fatalError("unhandled type!")
+                throw IdCardError.sessionError
             }
             throw e.getIdCardError()
         }
@@ -90,7 +77,7 @@ extension Operator: CardOperations {
             return signature
         } catch {
             guard let e = error as? IdCardInternalError else {
-                fatalError("unhandled type!")
+                throw IdCardError.sessionError
             }
             throw e.getIdCardError()
         }

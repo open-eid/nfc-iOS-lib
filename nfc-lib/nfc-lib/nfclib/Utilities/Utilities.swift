@@ -11,7 +11,6 @@ import CommonCrypto
 import CoreNFC
 import BigInt
 
-// TODO: Review if this is the best place for the public constants
 public let rsaAlgorithmName = "RSA"
 public let ecAlgorithmName = "EC"
 public let unknownAlgorithmName = "Unknown"
