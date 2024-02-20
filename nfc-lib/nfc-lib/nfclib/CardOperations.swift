@@ -59,4 +59,13 @@ public protocol CardOperations {
     /// - Returns: A `Data` object containing the signature.
     /// - Throws: An error if the signing operation fails.
     func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+    
+    /// Returns current retry count for the given PIN type.
+    ///
+    /// - Parameters:
+    ///   - CAN: `String` representing the Card Access Number.
+    ///   - pinType: Type of PIN from a fixed set.
+    /// - Returns: `Int` that represents the current retry count.
+    /// - Throws: <TBD> Define the set of errors to throw
+    func pinRetryCounter(CAN: String, pinType: PinType) async throws -> Int
 }

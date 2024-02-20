@@ -82,4 +82,15 @@ extension Operator: CardOperations {
             throw e.getIdCardError()
         }
     }
+    
+    public func pinRetryCounter(CAN: String, pinType: PinType) async throws -> Int {
+        do {
+            return try await OperationReadPinRetryCount().startReading(CAN: CAN, pinType: pinType)
+        } catch {
+            guard let e = error as? IdCardInternalError else {
+                throw IdCardError.sessionError
+            }
+            throw e.getIdCardError()
+        }
+    }
 }

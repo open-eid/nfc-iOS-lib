@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var pin1: String = ""
     @State private var pin2: String = ""
     @State private var selectedMethod: HashMethod = .sha254
+    @State private var pinType: PinType = .pin1
     let methods = HashMethod.allCases
 
     var body: some View {
@@ -138,6 +139,22 @@ struct ContentView: View {
                         await viewModel.sign(can: can, pin2: pin2)
                     }
                 }
+                
+                VStack {
+                    Picker("PIN type", selection: $pinType) {
+                        ForEach(PinType.allCases, id: \.self) { type in
+                            Text(type.description)
+                        }
+                    }
+                    .pickerStyle(SegmentedPickerStyle())
+                }
+                
+                Button("Get PIN retry count") {
+                    guard can.count >= 6 else { return }
+                    Task {
+                        await viewModel.readPinRetryCount(can: can, pinType: pinType)
+                    }
+                }
             }
             .tint(.yellow)
             .padding()
@@ -168,6 +185,16 @@ struct ContentView: View {
                 .font(.system(size: 30))
             Text(viewModel.signingResult ?? "")
                 .textSelection(.enabled)
+            
+            Text("PIN retry count for \(pinType.description)")
+                .font(.system(size: 30))
+            if let pinRetryCount = viewModel.pinRetryCount {
+                Text("\(pinRetryCount)")
+                    .textSelection(.enabled)
+            } else {
+                Text("PIN retry count N/A")
+                    .textSelection(.enabled)
+            }
         }
 
     }
@@ -184,6 +211,7 @@ extension ContentView {
         @Published var signingResult: String?
         @Published var hashedData: Data?
         @Published var hashedDataString: String?
+        @Published var pinRetryCount: Int?
 
         func computeHash(_ selectedMethod: HashMethod, _ dataToHashString: String) {
             guard let dataToHash = dataToHashString.data(using: .utf8) else { return }
@@ -241,6 +269,15 @@ extension ContentView {
                 let signResult = try await cardOperator.sign(CAN: can, hash: data, pin2: pin2)
                 let stringResult = signResult.hexStr
                 self.signingResult = stringResult
+            } catch {
+                // Handle error here
+            }
+        }
+        
+        func readPinRetryCount(can: String, pinType: PinType) async {
+            do {
+                let retryCount = try await cardOperator.pinRetryCounter(CAN: can, pinType: pinType)
+                self.pinRetryCount = retryCount
             } catch {
                 // Handle error here
             }
