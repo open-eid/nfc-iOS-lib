@@ -15,14 +15,14 @@ NFC-ID teek pakub võimalust kasutada ID-kaardi autentimis- ja signeerimisfunkts
 NFC-ID teek ei ole mõeldud avalikuks kasutamiseks. Tegemist on tehnilise taseme teegiga, mis delegeerib kasutajaga suhtlemise rakendusele. Pikema aja jooksul ei ole ohutu võimaldada lõppkasutajal sisestada oma ID-kaardi PIN-koode igasse mobiilirakendusse. ID-kaardiga suhtluseks, usaldusväärse kasutajaliidese ning muude vajalike funktsioonide jaoks on vajalik luua tulevikus spetsiaalne mobiilirakendus. Selline lahendus võimaldab edaspidi mobiilirakendust kiiremini uuendada ning rünnete korral kaitsemeetmeid kohandada ja täiendada. 
 NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-kaarti m valijarakenduses. 
 
-# Demorakenduse jooksutamise juhed
+# Demorakenduse jooksutamise juhend
 - Avada mvtng-nfc-demo.xcworkspace. Antud töökeskkond sisaldab endas nii demorakendust kui nfclib teeki.
 - Oodata, kuni Swift Package Manager'i sõltuvused laetakse alla
 - Product -> Run
 
 Simulaator pole toetatud, sest simulaatoril puudub NFC tugi.
 
-# Integreerimise juhed
+# Integreerimise juhend
 
 ## Rakenduse nõuded
 ### Lubada NFC Võimekus
@@ -59,24 +59,95 @@ Eesmärk on ehitada .framework failikogumik, mida saab lisata sõltuvusena teist
 Nüüd on nfc teek rakendusse integreeritud.
 
 # Teegi liidesed id-kaardiga suhtluseks
-Kõik avalikud operatsioonid on kirjeldatud `CardOperations` protokollis.
+Kõik avalikud operatsioonid koos dokumnetatsiooniga on kirjeldatud `CardOperations` protokollis. Üldine arhitektuuri kirjeldus on leitav [arhitektuuri dokumendist](docs/arhitektuur.md).  
+Järgnevalt on lühidalt kirjeldatud operatsioonid, mida teek võimaldab.
+- `public func isNFCSupported() -> Bool` - Tagastab, kas NFC on seadmel toetatud.
+- `public func readPublicInfo(CAN: String) async throws -> CardInfo` - Loeb asünkroonselt kaardilt avalikku teavet kaardi omaniku kohta
+- `public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate` - Loeb asünkroonselt kaardilt autentimise sertifikaadi.
+- `public func readSigningCertificate(CAN: String) async throws -> SecCertificate` - Loeb asünkroonselt kaardilt allkirjastamise sertifikaadi.
+- `public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData` - Hangib andmeid WebEID autentimiseks, kasutades antud volikirju ja väljakutset.
+- `public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data` - Viib läbi allkirjastamise operatsiooni, kasutades eelnevalt arvutatud räsi (toetatud on ainult SHA-384) ja PIN-koodi
 
-Järgnevalt on nimetatud operatsioonid, mida teek võimaldab.
+# Teegi kasutamise näited
+Esitame teegi peamiste operatsioonide kasutamise näited, mis on leitavad kaasasoleva [demorakenduse lähtekoodis](mvoting-nfc/nfc-demo).
 
-Tagastab, kas NFC on seadmel toetatud.
-`public func isNFCSupported() -> Bool`
+Iga operatsiooni (v.a NFC toe kontrollimine) käivitakse seadmel NFC operatsioon, mille tulemusel avaneb vastab dialoog. NFC tag (antud kontekstis ID-kaart) tuvastamisel algab vastav protsess, mille käigus luuakse ID-kaardiga ühendus ja edastatakse vajalikud protokolli käsud. Õnnestumise korral tagastab operatsioon vajalikud andmed. Vea korral protsess katkeb ja vistatakse viga. Täpsem info on leitav `CardOperations` protokolli dokumentatsioonis.
 
-Loeb asünkroonselt kaardilt avalikku teavet kaardi omaniku kohta
-`public func readPublicInfo(CAN: String) async throws -> CardInfo`
+## NFC toe kontrollimine
+	let operator = Operator()
+	let isNfcSupported = operator.isNFCSupported()
+	if isNfcSupported {
+		// TODO: NFC supported, configure UI, etc
+	} else {
+		// TODO: Handle missing NFC support
+	}
 
-Loeb asünkroonselt kaardilt autentimise sertifikaadi.
-`public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate`
+## ID-kaardi peale trükitud avaliku info lugemine
+	do {
+		// Connect to the ID-card using CAN number and read public information.
+		let operator = Operator()
+		let cardInfo = try await operator.readPublicInfo(CAN: "123456")
 
-Loeb asünkroonselt kaardilt allkirjastamise sertifikaadi.
-`public func readSigningCertificate(CAN: String) async throws -> SecCertificate`
+		// TODO: Use the card info
+		print("Public info:")
+		print(cardInfo.formattedDescription)
+	} catch {
+		// TODO: Handle errors
+		print("Error: \(error)")
+	}
 
-Hangib andmeid WebEID autentimiseks, kasutades antud volikirju ja väljakutset.
-`public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData`
+## Autentimissertifikaadi lugemine
+	do {
+		// Connect to the ID-card by using CAN number and read authentication certificate
+		let operator = Operator()
+		let authCert = try await operator.readAuthenticationCertificate(CAN: "123456")
 
-Viib läbi allkirjastamise operatsiooni, kasutades eelnevalt arvutatud räsi (toetatud on ainult SHA-384) ja PIN-koodi
-`public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data`
+		// TODO: Use the certificate
+		print("Read certificate:")
+		print(authCert)
+	} catch {
+		// TODO: Handle errors
+		print("Error: \(error)")
+	}
+
+## Allkirjastamise sertifikaadi lugemine
+	do {
+		// Connect to the ID-card by using CAN number and read signing certificate
+		let operator = Operator()
+		let signingCert = try await operator.readSigningCertificate(CAN: "123456")
+
+		// TODO: Use the certificate
+		print("Read certificate:")
+		print(signingCert)
+	} catch {
+		// TODO: Handle errors
+		print("Error: \(error)")
+	}
+
+## Web-EID autentimisinfo loomine
+	do {
+		// Connect to the ID-card by using CAN number and prepare Web-EID challenge data
+		let operator = Operator()
+		let webEidData = try await operator.loadWebEIDAuthenticationData(CAN: "123456", pin1: "pin1", challenge: "web_eid_challenge", origin: "web_eid_origin")
+
+		// TODO: Use Web-EID challenge data
+		print("Web-EID challenge:")
+		print(webEidData.formattedDescription)
+	} catch {
+		// TODO: Handle errors
+		print("Error: \(error)")
+	}
+
+## Allkirjastamine
+	do {
+		// Connect to the ID-card by using CAN number and sign the input data
+		let operator = Operator()
+		let signature = try await operator.sign(CAN: "123456", hash: hashData, pin2: "pin2")
+
+		// TODO: Use the signature
+		print("Signature:")
+		print(signature)
+	} catch {
+		// TODO: Handle errors
+		print("Error: \(error)")
+	}

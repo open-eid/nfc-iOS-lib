@@ -12,7 +12,7 @@ Pakutav funktsionaalsus on implementeeritud Operator klassis. Operator kasutab s
 ![Architecture](architecture_overview.png)
 
 ## Otsused
-iOS teegi puhul tehtud otsused on valdavalt samad, mis Androidil. Peamine erisus on teegi ülesehituses. iOS arhitektuur ei põhine MOPP abstratsioonidel erinevalt Androidist.
+iOS teegi puhul tehtud otsused on valdavalt samad, mis Androidil. Peamine erisus on teegi ülesehituses. Võrreldes Androidiga ei põhine iOS arhitektuur MOPP abstraktsioonidel.
 Ülejäänud otsuste kohta on informatsioon leitav järgnevatest Androidi alamjaotustest
 - [Skoop](https://github.com/e-gov/eid-nfc-Android-lib/blob/main/doc/arhitektuur.md#skoop)
 - [Lahtiütlused](https://github.com/e-gov/eid-nfc-Android-lib/blob/main/doc/arhitektuur.md#lahti%C3%BCtlused)
