@@ -7,6 +7,7 @@
   - [Teegi ehitamine](#teegi-ehitamine)
   - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
 - [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id---kaardiga-suhtluseks)
+- [Teegi kasutamise näited](#teegi-kasutamise-näited)
 
 # Ülevaade 
 
