@@ -26,6 +26,7 @@
 		13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */; };
 		13B950452B6A6715002580B2 /* CardOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B950442B6A6715002580B2 /* CardOperations.swift */; };
 		5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */; };
+		5A430F392B87731800C8784A /* OperationReadPinRetryCount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A430F382B87731800C8784A /* OperationReadPinRetryCount.swift */; };
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
 		5AD523BC2B2214B10033B88A /* OperationReadCertificate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */; };
@@ -51,6 +52,7 @@
 		13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationSignHash.swift; sourceTree = "<group>"; };
 		13B950442B6A6715002580B2 /* CardOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardOperations.swift; sourceTree = "<group>"; };
 		5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEidData.swift; sourceTree = "<group>"; };
+		5A430F382B87731800C8784A /* OperationReadPinRetryCount.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OperationReadPinRetryCount.swift; sourceTree = "<group>"; };
 		5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticateWithWebEID.swift; sourceTree = "<group>"; };
 		5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEIDHash.swift; sourceTree = "<group>"; };
 		5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationReadCertificate.swift; sourceTree = "<group>"; };
@@ -71,6 +73,7 @@
 		1319EBC12B330AB000F69C0E /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				5A430F382B87731800C8784A /* OperationReadPinRetryCount.swift */,
 				1319EBCA2B33209400F69C0E /* NFCConnection.swift */,
 				5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */,
 				139965B92B18351400D632C8 /* OperationReadPublicData.swift */,
@@ -258,6 +261,7 @@
 				13B950452B6A6715002580B2 /* CardOperations.swift in Sources */,
 				139965BA2B18351400D632C8 /* OperationReadPublicData.swift in Sources */,
 				139965AB2B182C6F00D632C8 /* DataProtocol+Extension.swift in Sources */,
+				5A430F392B87731800C8784A /* OperationReadPinRetryCount.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

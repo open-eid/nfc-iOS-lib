@@ -50,7 +50,8 @@ enum IdCardInternalError: Error {
          multipleTagsDetected,
          couldNotVerifyChipsMAC,
          cancelledByUser,
-        sessionInvalidated
+         sessionInvalidated,
+         invalidState
 
     func getIdCardError() -> IdCardError {
         switch self {
@@ -70,7 +71,8 @@ enum IdCardInternalError: Error {
                 .multipleTagsDetected,
                 .couldNotVerifyChipsMAC,
                 .cancelledByUser,
-                .sessionInvalidated:
+                .sessionInvalidated,
+                .invalidState:
             return .sessionError
         case .canAuthenticationFailed:
             return .wrongCAN
@@ -135,7 +137,7 @@ enum CertificateUsage {
     }
 }
 
-enum PinType {
+public enum PinType : CaseIterable {
     case pin1
     case pin2
     case puk
@@ -148,6 +150,17 @@ enum PinType {
             return 0x85
         case .puk:
             return 0x02
+        }
+    }
+    
+    public var description: String {
+        switch self {
+        case .pin1:
+            return "PIN1"
+        case .pin2:
+            return "PIN2"
+        case .puk:
+            return "PUK"
         }
     }
 }
@@ -318,6 +331,10 @@ public class NFCIdCard : NSObject {
     private func selectAuthSecurityEnv(tag: NFCISO7816Tag) async throws {
         let envData = Data([0x80, 0x04, 0xFF, 0x20, 0x08, 0x00, 0x84, 0x01, 0x81])
         _ = try await sendWrapped(tag: tag, cls: 0x00, ins: 0x22, p1: 0x41, p2: 0xA4, data: envData, le: 256)
+    }
+    
+    func selectQSCDAid(tag: NFCISO7816Tag) async throws {
+        _ = try await sendWrapped(tag: tag, cls: 0x00, ins: 0xA4, p1: 0x04, p2: 0x0C, data: Data([0x51, 0x53, 0x43, 0x44, 0x20, 0x41, 0x70, 0x70, 0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E]), le: 256)
     }
     
     private func verifyPin(tag: NFCISO7816Tag, pinType: PinType, pin1: Data) async throws {
