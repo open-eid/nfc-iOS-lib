@@ -12,6 +12,7 @@ interface CardOperations {
     + readSigningCertificate(CAN: String): SecCertificate
     + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
     + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
 }
 
 class CardInfo {
@@ -22,9 +23,6 @@ class CardInfo {
     + dateOfExpiry: String
 }
 
-
-class SecCertificate
-
 class WebEidData {
     + unverifiedCertificate: String
     + signingCertificate: String
@@ -32,6 +30,14 @@ class WebEidData {
     + signature: String
 }
 
+enum PinType {
+    pin1
+    pin2
+    puk
+}
+
 class Data
+
+class SecCertificate
 
 @enduml

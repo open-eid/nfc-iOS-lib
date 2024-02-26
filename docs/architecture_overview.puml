@@ -12,6 +12,7 @@ interface CardOperations {
     + readSigningCertificate(CAN: String): SecCertificate
     + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
     + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
 }
 
 class Operator {
@@ -21,6 +22,7 @@ class Operator {
     + readSigningCertificate(CAN: String): SecCertificate
     + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
     + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
 }
 
 class OperationReadCertificate {
@@ -39,11 +41,16 @@ class OperationAuthenticateWithWebEID {
     + startReading(): WebEidData
 }
 
+class OperationReadPinRetryCount {
+    + startReading(CAN: String, pinType: PinType): Int
+}
+
 Operator --|> CardOperations
 
 Operator --> OperationReadCertificate
 Operator --> OperationReadPublicData
 Operator --> OperationSignHash
 Operator --> OperationAuthenticateWithWebEID
+Operator --> OperationReadPinRetryCount
 
 @enduml

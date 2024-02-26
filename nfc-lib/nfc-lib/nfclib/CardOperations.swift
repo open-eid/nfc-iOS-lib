@@ -78,6 +78,6 @@ public protocol CardOperations {
     ///   - CAN: `String` representing the Card Access Number.
     ///   - pinType: Type of PIN from a fixed set.
     /// - Returns: `Int` that represents the current retry count.
-    /// - Throws: <TBD> Define the set of errors to throw
+    /// - Throws: An error of type `IdCardError` if the operations fails.
     func pinRetryCounter(CAN: String, pinType: PinType) async throws -> Int
 }
