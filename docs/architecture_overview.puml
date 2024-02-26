@@ -1,0 +1,56 @@
+@startuml
+' STYLE START
+
+skinparam shadowing false
+' STYLE END
+set namespaceSeparator none
+
+interface CardOperations {
+    + isNFCSupported(): Bool
+    + readPublicInfo(CAN: String): CardInfo
+    + readAuthenticationCertificate(CAN: String): SecCertificate
+    + readSigningCertificate(CAN: String): SecCertificate
+    + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
+    + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
+}
+
+class Operator {
+    + isNFCSupported(): Bool
+    + readPublicInfo(CAN: String): CardInfo
+    + readAuthenticationCertificate(CAN: String): SecCertificate
+    + readSigningCertificate(CAN: String): SecCertificate
+    + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
+    + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
+}
+
+class OperationReadCertificate {
+    + startReading(CAN: String, certUsage: CertificateUsage): SecCertificate
+}
+
+class OperationReadPublicData {
+    + startReading(CAN: String): CardInfo
+}
+
+class OperationSignHash {
+    + startSigning(CAN: String, PIN2: String, hash: Data): Data
+}
+
+class OperationAuthenticateWithWebEID {
+    + startReading(): WebEidData
+}
+
+class OperationReadPinRetryCount {
+    + startReading(CAN: String, pinType: PinType): Int
+}
+
+Operator --|> CardOperations
+
+Operator --> OperationReadCertificate
+Operator --> OperationReadPublicData
+Operator --> OperationSignHash
+Operator --> OperationAuthenticateWithWebEID
+Operator --> OperationReadPinRetryCount
+
+@enduml

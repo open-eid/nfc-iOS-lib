@@ -1,0 +1,43 @@
+@startuml
+' STYLE START
+
+skinparam shadowing false
+' STYLE END
+set namespaceSeparator none
+
+interface CardOperations {
+    + isNFCSupported(): Bool
+    + readPublicInfo(CAN: String): CardInfo
+    + readAuthenticationCertificate(CAN: String): SecCertificate
+    + readSigningCertificate(CAN: String): SecCertificate
+    + loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String): WebEidData
+    + sign(CAN: String, hash: Data, pin2: String): Data
+    + pinRetryCounter(CAN: String, pinType: PinType): Int
+}
+
+class CardInfo {
+    + givenName: String
+    + surname: String
+    + personalCode: String
+    + citizenship: String
+    + dateOfExpiry: String
+}
+
+class WebEidData {
+    + unverifiedCertificate: String
+    + signingCertificate: String
+    + algorithm: String
+    + signature: String
+}
+
+enum PinType {
+    pin1
+    pin2
+    puk
+}
+
+class Data
+
+class SecCertificate
+
+@enduml
