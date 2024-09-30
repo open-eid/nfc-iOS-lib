@@ -6,7 +6,7 @@
 //
 
 import CommonCrypto
-import SwiftECC
+@_implementationOnly import SwiftECC
 
 class AES {
     static let BlockSize: Int = kCCBlockSizeAES128

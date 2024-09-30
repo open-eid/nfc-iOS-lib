@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SwiftECC
+@_implementationOnly import SwiftECC
 import CommonCrypto
 import CoreNFC
 import BigInt
