@@ -1,12 +1,12 @@
 - [Ülevaade](#ülevaade)
-- [Demorakenduse jooksutamise juhed](#demorakenduse-jooksutamise-juhend)
-- [Integreerimise juhed](#integreerimise-juhend)
+- [Demorakenduse jooksutamise juhend](#demorakenduse-jooksutamise-juhend)
+- [Integreerimise juhend](#integreerimise-juhend)
   - [Rakenduse nõuded](#rakenduse-nõuded)
-  - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
-  - [Uuendada Info.plist](uuendada-info-plist)
-  - [Teegi ehitamine](#teegi-ehitamine)
-  - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
-- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id---kaardiga-suhtluseks)
+    - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
+    - [Uuendada Info.plist](#uuendada-infoplist)
+    - [Teegi ehitamine](#teegi-ehitamine)
+    - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
+- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id-kaardiga-suhtluseks)
 
 # Ülevaade 
 
@@ -15,14 +15,14 @@ NFC-ID teek pakub võimalust kasutada ID-kaardi autentimis- ja signeerimisfunkts
 NFC-ID teek ei ole mõeldud avalikuks kasutamiseks. Tegemist on tehnilise taseme teegiga, mis delegeerib kasutajaga suhtlemise rakendusele. Pikema aja jooksul ei ole ohutu võimaldada lõppkasutajal sisestada oma ID-kaardi PIN-koode igasse mobiilirakendusse. ID-kaardiga suhtluseks, usaldusväärse kasutajaliidese ning muude vajalike funktsioonide jaoks on vajalik luua tulevikus spetsiaalne mobiilirakendus. Selline lahendus võimaldab edaspidi mobiilirakendust kiiremini uuendada ning rünnete korral kaitsemeetmeid kohandada ja täiendada. 
 NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-kaarti m valijarakenduses. 
 
-# Demorakenduse jooksutamise juhed
+# Demorakenduse jooksutamise juhend
 - Avada mvtng-nfc-demo.xcworkspace. Antud töökeskkond sisaldab endas nii demorakendust kui nfclib teeki.
 - Oodata, kuni Swift Package Manager'i sõltuvused laetakse alla
 - Product -> Run
 
 Simulaator pole toetatud, sest simulaatoril puudub NFC tugi.
 
-# Integreerimise juhed
+# Integreerimise juhend
 
 ## Rakenduse nõuded
 ### Lubada NFC Võimekus
@@ -41,20 +41,17 @@ Info.plist failis peab deklareerima NFC kasutuse, et selgitada, miks rakendus va
 - Määrata selle väärtuseks string, mis kirjeldab, miks rakendus vajab juurdepääsu NFC-le. See kirjeldus kuvatakse kasutajale esmakordselt, kui rakendus üritab NFC-d kasutada.
 
 ### Teegi ehitamine
-Eesmärk on ehitada .framework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
+Eesmärk on ehitada .xcframework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
 
-- Ava nfclib.xcodeproj
-- Product -> Build
-  - Selle tagajärjel ilmub xCode'i kaustapuu vaates Products kausta alla nfclib framework.
-- Parem klikk -> Show in Finder
-  - See avab failisüsteemis kausta, kus on nfclib.framework
+- Jooksuta skripti nimega build_xcframework.sh, mis asub projekti kaustas
+  - Selle tagajärjel ilmub projekti kaustas build kausta nflib.xcframework
 
 ### Teegi lisamine rakendusse
 - Ava projekt, kuhu soovid integreerida nfclib teegi
 - Vali projekt ja TARGETS menüü all õige programm
 - Selle tagajärjel peaks olema nähtav General osa sihtprogrammi kohta
 - Otsida Frameworks and Libraries
-- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.framework
+- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.xcframework
 
 Nüüd on nfc teek rakendusse integreeritud.
 
