@@ -1,12 +1,12 @@
 - [Ülevaade](#ülevaade)
-- [Demorakenduse jooksutamise juhed](#demorakenduse-jooksutamise-juhend)
-- [Integreerimise juhed](#integreerimise-juhend)
+- [Demorakenduse jooksutamise juhed](#demorakenduse-jooksutamise-juhed)
+- [Integreerimise juhed](#integreerimise-juhed)
   - [Rakenduse nõuded](#rakenduse-nõuded)
-  - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
-  - [Uuendada Info.plist](uuendada-info-plist)
-  - [Teegi ehitamine](#teegi-ehitamine)
-  - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
-- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id---kaardiga-suhtluseks)
+    - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
+    - [Uuendada Info.plist](#uuendada-infoplist)
+    - [Teegi ehitamine](#teegi-ehitamine)
+    - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
+- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id-kaardiga-suhtluseks)
 
 # Ülevaade 
 
@@ -41,20 +41,17 @@ Info.plist failis peab deklareerima NFC kasutuse, et selgitada, miks rakendus va
 - Määrata selle väärtuseks string, mis kirjeldab, miks rakendus vajab juurdepääsu NFC-le. See kirjeldus kuvatakse kasutajale esmakordselt, kui rakendus üritab NFC-d kasutada.
 
 ### Teegi ehitamine
-Eesmärk on ehitada .framework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
+Eesmärk on ehitada .xcframework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
 
-- Ava nfclib.xcodeproj
-- Product -> Build
-  - Selle tagajärjel ilmub xCode'i kaustapuu vaates Products kausta alla nfclib framework.
-- Parem klikk -> Show in Finder
-  - See avab failisüsteemis kausta, kus on nfclib.framework
+- Jooksuta skripti nimega build_xcframework.sh, mis asub projekti kaustas
+  - Selle tagajärjel ilmub projekti kaustas build kausta nflib.xcframework
 
 ### Teegi lisamine rakendusse
 - Ava projekt, kuhu soovid integreerida nfclib teegi
 - Vali projekt ja TARGETS menüü all õige programm
 - Selle tagajärjel peaks olema nähtav General osa sihtprogrammi kohta
 - Otsida Frameworks and Libraries
-- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.framework
+- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.xcframework
 
 Nüüd on nfc teek rakendusse integreeritud.
 
