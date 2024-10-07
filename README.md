@@ -1,6 +1,6 @@
 - [Ülevaade](#ülevaade)
-- [Demorakenduse jooksutamise juhed](#demorakenduse-jooksutamise-juhed)
-- [Integreerimise juhed](#integreerimise-juhed)
+- [Demorakenduse jooksutamise juhend](#demorakenduse-jooksutamise-juhend)
+- [Integreerimise juhend](#integreerimise-juhend)
   - [Rakenduse nõuded](#rakenduse-nõuded)
     - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
     - [Uuendada Info.plist](#uuendada-infoplist)
@@ -15,14 +15,14 @@ NFC-ID teek pakub võimalust kasutada ID-kaardi autentimis- ja signeerimisfunkts
 NFC-ID teek ei ole mõeldud avalikuks kasutamiseks. Tegemist on tehnilise taseme teegiga, mis delegeerib kasutajaga suhtlemise rakendusele. Pikema aja jooksul ei ole ohutu võimaldada lõppkasutajal sisestada oma ID-kaardi PIN-koode igasse mobiilirakendusse. ID-kaardiga suhtluseks, usaldusväärse kasutajaliidese ning muude vajalike funktsioonide jaoks on vajalik luua tulevikus spetsiaalne mobiilirakendus. Selline lahendus võimaldab edaspidi mobiilirakendust kiiremini uuendada ning rünnete korral kaitsemeetmeid kohandada ja täiendada. 
 NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-kaarti m valijarakenduses. 
 
-# Demorakenduse jooksutamise juhed
+# Demorakenduse jooksutamise juhend
 - Avada mvtng-nfc-demo.xcworkspace. Antud töökeskkond sisaldab endas nii demorakendust kui nfclib teeki.
 - Oodata, kuni Swift Package Manager'i sõltuvused laetakse alla
 - Product -> Run
 
 Simulaator pole toetatud, sest simulaatoril puudub NFC tugi.
 
-# Integreerimise juhed
+# Integreerimise juhend
 
 ## Rakenduse nõuded
 ### Lubada NFC Võimekus
