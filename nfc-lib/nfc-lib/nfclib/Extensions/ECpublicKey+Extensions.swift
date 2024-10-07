@@ -7,7 +7,7 @@
 
 import CommonCrypto
 import CryptoTokenKit
-import SwiftECC
+@_implementationOnly import SwiftECC
 
 extension ECPublicKey {
     convenience init?(domain: Domain, tlv: TKTLVRecord) throws {

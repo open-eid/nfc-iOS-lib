@@ -5,7 +5,7 @@
 //  Created by Timo Kallaste on 30.11.2023.
 //
 
-import SwiftECC
+@_implementationOnly import SwiftECC
 
 extension DataProtocol where Self.Index == Int {
     var toHex: String {

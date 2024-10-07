@@ -9,7 +9,7 @@ import Foundation
 import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
-import SwiftECC
+@_implementationOnly import SwiftECC
 import BigInt
 import Security
 
