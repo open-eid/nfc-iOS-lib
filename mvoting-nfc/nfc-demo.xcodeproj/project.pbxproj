@@ -53,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EEC1BB62CEBB0120022D377 /* X509 in Frameworks */,
 				1319EBC32B330BB500F69C0E /* nfclib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -129,6 +130,7 @@
 			);
 			name = "nfc-demo";
 			packageProductDependencies = (
+				5EEC1BB52CEBB0120022D377 /* X509 */,
 			);
 			productName = "mvoting-nfc";
 			productReference = 139195A82AFA29CC00EDA022 /* nfc-demo.app */;
@@ -159,6 +161,7 @@
 			);
 			mainGroup = 1391959F2AFA29CC00EDA022;
 			packageReferences = (
+				5EEC1BB42CEBB0120022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */,
 			);
 			productRefGroup = 139195A92AFA29CC00EDA022 /* Products */;
 			projectDirPath = "";
@@ -404,6 +407,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5EEC1BB42CEBB0120022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-certificates.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.6.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5EEC1BB52CEBB0120022D377 /* X509 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5EEC1BB42CEBB0120022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */;
+			productName = X509;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 139195A02AFA29CC00EDA022 /* Project object */;
 }
