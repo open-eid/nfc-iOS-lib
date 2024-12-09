@@ -29,6 +29,7 @@
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
 		5AD523BC2B2214B10033B88A /* OperationReadCertificate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */; };
+		7D8E1EE22D01C6CE00F13D71 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -54,6 +55,7 @@
 		5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticateWithWebEID.swift; sourceTree = "<group>"; };
 		5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEIDHash.swift; sourceTree = "<group>"; };
 		5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationReadCertificate.swift; sourceTree = "<group>"; };
+		7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +129,7 @@
 		139965B52B182FAA00D632C8 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */,
 				139965B22B182F4E00D632C8 /* AES.swift */,
 				1319EBC82B330D8E00F69C0E /* Digest+Extensions.swift */,
 				1319EBC62B330D1500F69C0E /* Logging.swift */,
@@ -251,6 +254,7 @@
 				139965AF2B182EA900D632C8 /* NFCISO7816Tag+Extensions.swift in Sources */,
 				1319EBCB2B33209400F69C0E /* NFCConnection.swift in Sources */,
 				139965B82B18348000D632C8 /* Operator.swift in Sources */,
+				7D8E1EE22D01C6CE00F13D71 /* ProgressBar.swift in Sources */,
 				139965B32B182F4E00D632C8 /* AES.swift in Sources */,
 				137A26112B32ADF2007503EE /* Data+Extensions.swift in Sources */,
 				5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */,

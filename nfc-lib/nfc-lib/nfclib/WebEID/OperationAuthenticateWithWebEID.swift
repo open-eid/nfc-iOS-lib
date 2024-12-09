@@ -46,9 +46,28 @@ class OperationAuthenticateWithWebEID: NSObject {
             }
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
             // TODO: Use a proper message that is localised
-            session?.alertMessage = "Palun asetage oma ID-kaart vastu nutiseadet."
+            updateAlertMessage(step: 0)
             session?.begin()
         }
+    }
+
+    private func updateAlertMessage(step: Int) {
+        let stepMessages = [
+            "Palun asetage oma ID-kaart vastu nutiseadet.",
+            "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse.",
+            "Andmete lugemine käib, palun oodake.",
+            "Autentimine käib, palun oodake."
+        ]
+
+        let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
+
+        let progressBar = ProgressBar(currentStep: step)
+
+        var message = stepMessage
+
+        message += "\n\n\(progressBar.generate())"
+
+        session?.alertMessage = message
     }
 }
 
@@ -60,7 +79,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
             }
 
             do {
-                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                updateAlertMessage(step: 1)
                 let tag = try await NFCConnection().setup(session, tags: tags)
                 guard let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) else {
                     let errorMessage = "Could not verify chip's MAC."
@@ -69,9 +88,11 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                     return
                 }
 
+                updateAlertMessage(step: 2)
                 let idCard = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
 
                 do {
+                    updateAlertMessage(step: 3)
                     let certBytes = try await idCard.readCert(tag: tag, usage: CertificateUsage.auth)
                     let x509Certificate = try convertBytesToX509Certificate(certBytes)
 
@@ -105,6 +126,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                     }
 
                     do {
+                        updateAlertMessage(step: 4)
                         let authResult = try await idCard.authenticate(tag: tag, pin1: pin1Data, token: webEidHash)
 
                         // TODO: Encapsulate the result and publish it
