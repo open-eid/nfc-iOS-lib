@@ -1,0 +1,78 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "asn1",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/leif-ibsen/ASN1",
+          "name" : "ASN1"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "6ee8f54164399ca045c3dca35bf00e68e81e5458",
+            "version" : "2.3.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "ASN1"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "bigint",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/leif-ibsen/BigInt",
+          "name" : "BigInt"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "dd86cca1f181117e042ad7db89499a0e8b23e321",
+            "version" : "1.15.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "BigInt"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "digest",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/leif-ibsen/Digest",
+          "name" : "Digest"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "1981551eed9b869659084c1536e6d028b3fb77d8",
+            "version" : "1.2.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "Digest"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swiftecc",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/leif-ibsen/SwiftECC",
+          "name" : "SwiftECC"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "2cf3874be7dbaab30f4a884784ddc85a743e3a6b",
+            "version" : "5.1.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "SwiftECC"
+      }
+    ]
+  },
+  "version" : 6
+}
