@@ -45,6 +45,21 @@ class OperationSignHash: NSObject {
             session?.begin()
         }
     }
+
+    private func updateAlertMessage(step: Int) {
+        let stepMessages = [
+            "Palun asetage oma ID-kaart vastu nutiseadet.",
+            "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse.",
+            "Andmete lugemine käib, palun oodake.",
+            "Signeerimine käib, palun oodake."
+        ]
+
+        let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
+        let progressBar = ProgressBar(currentStep: step)
+        var message = stepMessage
+        message += "\n\n\(progressBar.generate())"
+        session?.alertMessage = message
+    }
 }
 
 extension OperationSignHash: NFCTagReaderSessionDelegate {
@@ -52,12 +67,15 @@ extension OperationSignHash: NFCTagReaderSessionDelegate {
      
         Task {
             do {
-                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                updateAlertMessage(step: 1)
                 let tag = try await connection.setup(session, tags: tags)
                 if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
+                    updateAlertMessage(step: 2)
                     let card = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
                     try await card.selectDF(tag: tag, file: Data())
                     try await card.selectDF(tag: tag, file: Data([0xAD, 0xF2]))
+
+                    updateAlertMessage(step: 3)
                     var pin = Data(repeating: 0xFF, count: 12)
                     pin.replaceSubrange(0..<PIN.count, with: PIN.utf8)
                     // verify PIN2
@@ -72,6 +90,8 @@ extension OperationSignHash: NFCTagReaderSessionDelegate {
 
                     let secEnvData = Data(hex: cryptographicMechanismRef + len + value + pkRef + pkLen + pkValue)!
                     let _ = try await card.sendWrapped(tag: tag, cls: 0x00, ins: 0x22, p1: 0x41, p2: 0xb6, data: secEnvData, le: 0)
+
+                    updateAlertMessage(step: 4)
                     guard let hashData = hashToSign else {
                         return
                     }
