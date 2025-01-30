@@ -173,7 +173,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
         case .sha512WithRSAEncryption:
             return SignatureAlgorithmInfo(name: "RS512", bitSize: 512)
         default:
-            return SignatureAlgorithmInfo(name: unknownAlgorithmName, bitSize: 0)
+            throw AuthenticateWithWebEidError.failedToMapAlgorithm
         }
     }
 
