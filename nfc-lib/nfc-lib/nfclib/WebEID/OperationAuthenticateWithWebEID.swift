@@ -96,7 +96,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                     updateAlertMessage(step: 3)
                     let certBytes = try await idCard.readCert(tag: tag, usage: CertificateUsage.auth)
                     let authCertificate = try convertBytesToX509Certificate(certBytes)
-                    let authCertificateSignatureAlgorithm = try getAlgorithmNameFromCertificate(authCertificate)
+                    let authCertificateSignatureAlgorithmInfo = try getAlgorithmInfoFromCertificate(authCertificate)
 
                     guard let publicKey = SecCertificateCopyKey(authCertificate) else {
                         // TODO: Failed to process public key, handle error
@@ -117,8 +117,9 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                     guard let hashLength = hashLengthFromInt(keyAlgorithmData.keyLength),
                           let originData = origin.data(using: .utf8),
                           let challengeData = challenge.data(using: .utf8),
-                          let originHash = sha(hashLength: .bits512, data: originData),
-                          let challengeHash = sha(hashLength: .bits512, data: challengeData),
+                          let signatureHashLenght = hashLengthFromInt(authCertificateSignatureAlgorithmInfo.bitSize),
+                          let originHash = sha(hashLength: signatureHashLenght, data: originData),
+                          let challengeHash = sha(hashLength: signatureHashLenght, data: challengeData),
                           let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash),
                           let pin1Data = self.pin1.data(using: .utf8) else {
                         let errorMessage = "Andmete lugemine ebaõnnestus"
@@ -133,7 +134,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                         let signingCertificateBytes = try await idCard.readCert(tag: tag, usage: .sign)
 
                         let webEidData = WebEidData(unverifiedCertificate: certBytes.base64EncodedString(),
-                                                    algorithm: authCertificateSignatureAlgorithm,
+                                                    algorithm: authCertificateSignatureAlgorithmInfo.name,
                                                     signature: authResult.base64EncodedString(),
                                                     signingCertificate: signingCertificateBytes.base64EncodedString())
                         continuation?.resume(returning: webEidData)
@@ -155,24 +156,24 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
         }
     }
 
-    func getAlgorithmNameFromCertificate(_ secCertificate: SecCertificate) throws -> String {
+    func getAlgorithmInfoFromCertificate(_ secCertificate: SecCertificate) throws -> SignatureAlgorithmInfo {
         let certificate = try Certificate(secCertificate)
 
         switch certificate.signatureAlgorithm {
         case .ecdsaWithSHA256:
-            return "ES\(256)"
+            return SignatureAlgorithmInfo(name: "ES256", bitSize: 256)
         case .ecdsaWithSHA384:
-            return "ES\(384)"
+            return SignatureAlgorithmInfo(name: "ES384", bitSize: 384)
         case .ecdsaWithSHA512:
-            return "ES\(512)"
+            return SignatureAlgorithmInfo(name: "ES512", bitSize: 512)
         case .sha256WithRSAEncryption:
-            return "RS\(256)"
+            return SignatureAlgorithmInfo(name: "RS256", bitSize: 256)
         case .sha384WithRSAEncryption:
-            return "RS\(384)"
+            return SignatureAlgorithmInfo(name: "RS384", bitSize: 384)
         case .sha512WithRSAEncryption:
-            return "RS\(512)"
+            return SignatureAlgorithmInfo(name: "RS512", bitSize: 512)
         default:
-            return unknownAlgorithmName
+            return SignatureAlgorithmInfo(name: unknownAlgorithmName, bitSize: 0)
         }
     }
 
@@ -219,4 +220,9 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
             return nil
         }
     }
+}
+
+struct SignatureAlgorithmInfo {
+    let name: String
+    let bitSize: Int
 }
