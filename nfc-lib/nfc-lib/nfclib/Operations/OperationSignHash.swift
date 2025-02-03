@@ -41,7 +41,7 @@ class OperationSignHash: NSObject {
             self.hashToSign = hash
 
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
-            session?.alertMessage = nfcMessage
+            updateAlertMessage(step: 0)
             session?.begin()
         }
     }
