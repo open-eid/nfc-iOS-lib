@@ -59,4 +59,22 @@ public protocol CardOperations {
     /// - Returns: A `Data` object containing the signature.
     /// - Throws: An error if the signing operation fails.
     func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+
+    /// Unblocks a PIN1 using the PUK code.
+    ///
+    /// - Parameters:
+    ///   - CAN: A `String` representing the Card Access Number.
+    ///   - puk: The current PUK code for verification.
+    ///   - newCode: The new PIN code.
+    /// - Throws: An error if the operation fails.
+    func unblockPin1(CAN: String, puk: String, newCode: String) async throws
+
+    /// Unblocks a PIN2 using the PUK code.
+    ///
+    /// - Parameters:
+    ///   - CAN: A `String` representing the Card Access Number.
+    ///   - puk: The current PUK code for verification.
+    ///   - newCode: The new PIN code.
+    /// - Throws: An error if the operation fails.
+    func unblockPin2(CAN: String, puk: String, newCode: String) async throws
 }

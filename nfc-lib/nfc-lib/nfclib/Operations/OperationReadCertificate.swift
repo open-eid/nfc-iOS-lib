@@ -9,7 +9,7 @@ import Foundation
 import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 import BigInt
 import Security
 
@@ -19,11 +19,17 @@ public enum ReadCertificateError: Error {
     case general
 }
 
+enum CertificateUsage {
+    case auth
+    case sign
+}
+
 class OperationReadCertificate: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
     private var certUsage: CertificateUsage!
     private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
+    private let connection = NFCConnection()
     private var continuation: CheckedContinuation<SecCertificate, Error>?
     
     public func startReading(CAN: String, certUsage: CertificateUsage) async throws -> SecCertificate {
@@ -32,7 +38,6 @@ class OperationReadCertificate: NSObject {
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                // TODO: Handle this case properly
                 continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
@@ -54,28 +59,31 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
                 self.session = nil
             }
             
-            guard let checkedUsage = self.certUsage else {
+            guard let certUsage else {
                 continuation?.resume(throwing: ReadCertificateError.certificateUsageNotSpecified)
                 session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 return
             }
             do {
                 session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
-                let tag = try await NFCConnection().setup(session, tags: tags)
-                if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
-                    let idCard = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
-                    do {
-                        let certBytes = try await idCard.readCert(tag: tag, usage: checkedUsage)
-                        let x509Certificate = try convertBytesToX509Certificate(certBytes)
+                let tag = try await connection.setup(session, tags: tags)
+                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                do {
+                    switch certUsage {
+                    case .auth:
+                        let cert = try await cardCommands.readAuthenticationCertificate()
+                        let x509Certificate = try convertBytesToX509Certificate(cert)
                         continuation?.resume(with: .success(x509Certificate))
-                    } catch {
-                        continuation?.resume(throwing: ReadCertificateError.failedToReadCertificate)
+                    case .sign:
+                        let cert = try await cardCommands.readSignatureCertificate()
+                        let x509Certificate = try convertBytesToX509Certificate(cert)
+                        continuation?.resume(with: .success(x509Certificate))
                     }
-                    // Done with the session, invalidate
                     session.alertMessage = "Andmed loetud"
                     session.invalidate()
-                } else {
-                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
+                } catch {
+                    session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                    continuation?.resume(throwing: ReadCertificateError.failedToReadCertificate)
                 }
             } catch {
                 session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
@@ -84,9 +92,7 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
         }
     }
     
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
-        // TODO: Anyhing we want to do here?
-    }
+    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) { }
     
     func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
         self.session = nil

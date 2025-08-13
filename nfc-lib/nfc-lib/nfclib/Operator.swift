@@ -82,4 +82,26 @@ extension Operator: CardOperations {
             throw e.getIdCardError()
         }
     }
+
+    public func unblockPin1(CAN: String, puk: String, newCode: String) async throws {
+        do {
+            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode)
+        } catch {
+            guard let e = error as? IdCardInternalError else {
+                throw IdCardError.sessionError
+            }
+            throw e.getIdCardError()
+        }
+    }
+
+    public func unblockPin2(CAN: String, puk: String, newCode: String) async throws {
+        do {
+            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode)
+        } catch {
+            guard let e = error as? IdCardInternalError else {
+                throw IdCardError.sessionError
+            }
+            throw e.getIdCardError()
+        }
+    }
 }

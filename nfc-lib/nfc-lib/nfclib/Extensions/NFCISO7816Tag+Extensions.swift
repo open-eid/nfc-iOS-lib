@@ -9,23 +9,26 @@ import CoreNFC
 import CryptoTokenKit
 
 extension NFCISO7816Tag {
-    func sendCommand(cls: UInt8, ins: UInt8, p1: UInt8, p2: UInt8, data: Data, le: Int?) async throws -> Data {
-        let responseLength = le ?? -1
-        do {
-            let apdu = NFCISO7816APDU(instructionClass: cls, instructionCode: ins, p1Parameter: p1, p2Parameter: p2, data: data, expectedResponseLength: responseLength)
-            switch try await sendCommand(apdu: apdu) {
-            case (let data, 0x90, 0x00):
-                return data
-            case (let data, 0x61, let len):
-                return data + (try await sendCommand(cls: 0x00, ins: 0xC0, p1: 0x00, p2: 0x00, data: Data(), le: Int(len)))
-            case (_, 0x6C, let len):
-                return try await sendCommand(cls: cls, ins: ins, p1: p1, p2: p2, data: data, le: Int(len))
-            case (_, let sw1, let sw2):
-                throw IdCardInternalError.sendCommandFailed(message: String(format: "%02X%02X", sw1, sw2))
-            }
-        } catch {
-            throw error
+    func sendCommand(cls: UInt8, ins: UInt8, p1: UInt8, p2: UInt8, data: Data = Data(), le: Int = -1) async throws -> Data {
+        let apdu = NFCISO7816APDU(instructionClass: cls, instructionCode: ins, p1Parameter: p1, p2Parameter: p2, data: data, expectedResponseLength: le)
+        let result = try await sendCommand(apdu: apdu)
+        switch result {
+        case (_, 0x63, 0x00):
+            throw IdCardInternalError.canAuthenticationFailed
+        case (let data, 0x61, let len):
+            return data + (try await sendCommand(cls: 0x00, ins: 0xC0, p1: 0x00, p2: 0x00, le: Int(len)))
+        case (_, 0x6C, let len):
+            return try await sendCommand(cls: cls, ins: ins, p1: p1, p2: p2, data: data, le: Int(len))
+        case (let data, _, _):
+            return data
         }
+    }
+
+    func sendCommand(cls: UInt8, ins: UInt8, p1: UInt8, p2: UInt8, records: [TKTLVRecord], le: Int = -1) async throws -> Data {
+        let data = records.reduce(Data()) { partialResult, record in
+            partialResult + record.data
+        }
+        return try await sendCommand(cls: cls, ins: ins, p1: p1, p2: p2, data: data, le: le)
     }
 
     func sendPaceCommand(records: [TKTLVRecord], tagExpected: TKTLVTag) async throws -> TKBERTLVRecord {

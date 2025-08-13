@@ -9,10 +9,10 @@ import Foundation
 import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 import BigInt
 import Security
-@_implementationOnly import X509
+internal import X509
 
 enum AuthenticateWithWebEidError: Error {
     case failedToReadPublicKey
@@ -26,7 +26,8 @@ class OperationAuthenticateWithWebEID: NSObject {
     private let pin1: String
     private let challenge: String
     private let origin: String
-    
+    private let connection = NFCConnection()
+
     private var session: NFCTagReaderSession?
     private var continuation: CheckedContinuation<WebEidData, Error>?
     
@@ -81,20 +82,13 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
 
             do {
                 updateAlertMessage(step: 1)
-                let tag = try await NFCConnection().setup(session, tags: tags)
-                guard let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) else {
-                    let errorMessage = "Could not verify chip's MAC."
-                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
-
+                let tag = try await connection.setup(session, tags: tags)
                 updateAlertMessage(step: 2)
-                let idCard = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
+                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
 
                 do {
                     updateAlertMessage(step: 3)
-                    let certBytes = try await idCard.readCert(tag: tag, usage: CertificateUsage.auth)
+                    let certBytes = try await cardCommands.readAuthenticationCertificate()
                     let authCertificate = try convertBytesToX509Certificate(certBytes)
                     let authCertificateSignatureAlgorithmInfo = try getAlgorithmInfoFromCertificate(authCertificate)
 
@@ -120,8 +114,8 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                           let signatureHashLenght = hashLengthFromInt(authCertificateSignatureAlgorithmInfo.bitSize),
                           let originHash = sha(hashLength: signatureHashLenght, data: originData),
                           let challengeHash = sha(hashLength: signatureHashLenght, data: challengeData),
-                          let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash),
-                          let pin1Data = self.pin1.data(using: .utf8) else {
+                          let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
+                    else {
                         let errorMessage = "Andmete lugemine ebaõnnestus"
                         session.invalidate(errorMessage: errorMessage)
                         continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
@@ -130,13 +124,15 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
 
                     do {
                         updateAlertMessage(step: 4)
-                        let authResult = try await idCard.authenticate(tag: tag, pin1: pin1Data, token: webEidHash)
-                        let signingCertificateBytes = try await idCard.readCert(tag: tag, usage: .sign)
+                        let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
+                        let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
 
-                        let webEidData = WebEidData(unverifiedCertificate: certBytes.base64EncodedString(),
-                                                    algorithm: authCertificateSignatureAlgorithmInfo.name,
-                                                    signature: authResult.base64EncodedString(),
-                                                    signingCertificate: signingCertificateBytes.base64EncodedString())
+                        let webEidData = WebEidData(
+                            unverifiedCertificate: certBytes.base64EncodedString(),
+                            algorithm: authCertificateSignatureAlgorithmInfo.name,
+                            signature: authResult.base64EncodedString(),
+                            signingCertificate:  signingCertificateBytes.base64EncodedString()
+                        )
                         continuation?.resume(returning: webEidData)
                         session.alertMessage = "Andmed loetud"
                         session.invalidate()
@@ -148,7 +144,6 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                     session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                     continuation?.resume(throwing: error)
                 }
-                // Done with the session, invalidate
             } catch {
                 continuation?.resume(throwing: error)
             }
@@ -202,9 +197,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
         }
     }
     
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
-        // TODO: Anyhing we want to do here?
-    }
+    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) { }
     
     func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
         self.session = nil

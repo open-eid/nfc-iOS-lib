@@ -9,13 +9,9 @@ import Foundation
 import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 import BigInt
 import CryptoKit
-
-enum SignHashError: Error {
-    case general
-}
 
 class OperationSignHash: NSObject {
     private var session: NFCTagReaderSession?
@@ -32,7 +28,6 @@ class OperationSignHash: NSObject {
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                // TODO: Handle this case properly
                 continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
@@ -68,49 +63,17 @@ extension OperationSignHash: NFCTagReaderSessionDelegate {
         Task {
             do {
                 updateAlertMessage(step: 1)
+                guard let hashToSign else {
+                    return
+                }
                 let tag = try await connection.setup(session, tags: tags)
-                if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
-                    updateAlertMessage(step: 2)
-                    let card = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
-                    try await card.selectDF(tag: tag, file: Data())
-                    try await card.selectDF(tag: tag, file: Data([0xAD, 0xF2]))
-
-                    updateAlertMessage(step: 3)
-                    var pin = Data(repeating: 0xFF, count: 12)
-                    pin.replaceSubrange(0..<PIN.count, with: PIN.utf8)
-                    // verify PIN2
-                    let _ = try await card.sendWrapped(tag: tag, cls: 0x00, ins: 0x20, p1: 0x00, p2: 0x85, data: pin, le: 256)
-                    //                    ECDSA - SHA-384
-                    let cryptographicMechanismRef = "80"
-                    let len = "04"
-                    let value = "ff150800"
-                    let pkRef = "84"
-                    let pkLen = "01"
-                    let pkValue = "9f"
-
-                    let secEnvData = Data(hex: cryptographicMechanismRef + len + value + pkRef + pkLen + pkValue)!
-                    let _ = try await card.sendWrapped(tag: tag, cls: 0x00, ins: 0x22, p1: 0x41, p2: 0xb6, data: secEnvData, le: 0)
-
-                    updateAlertMessage(step: 4)
-                    guard let hashData = hashToSign else {
-                        return
-                    }
-                    let signatureValue = try await card.sendWrapped(tag: tag, cls:0x00, ins: 0x2A, p1: 0x9E, p2: 0x9A, data: hashData, le: 256);
-                    continuation?.resume(with: .success(signatureValue))
-                    session.alertMessage = "Andmed loetud"
-                    session.invalidate()
-                } else {
-                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
-                }
-            } catch let error as IdCardInternalError {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
-                if case .sendCommandFailed(message: let message) = error {
-                    if let e = NFCIdCard().getPinError(message) {
-                        continuation?.resume(throwing: e)
-                    }
-                } else {
-                    continuation?.resume(throwing: error)
-                }
+                updateAlertMessage(step: 2)
+                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                updateAlertMessage(step: 3)
+                let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: PIN)
+                continuation?.resume(with: .success(signatureValue))
+                session.alertMessage = "Andmed loetud"
+                session.invalidate()
             } catch {
                 session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 continuation?.resume(throwing: error)
@@ -118,9 +81,7 @@ extension OperationSignHash: NFCTagReaderSessionDelegate {
         }
     }
 
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
-        // TODO: Anyhing we want to do here?
-    }
+    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) { }
 
     func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
         self.session = nil

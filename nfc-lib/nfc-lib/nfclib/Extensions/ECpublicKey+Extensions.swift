@@ -7,11 +7,11 @@
 
 import CommonCrypto
 import CryptoTokenKit
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 
 extension ECPublicKey {
-    convenience init?(domain: Domain, tlv: TKTLVRecord) throws {
-        guard let w = try? domain.decodePoint(Bytes(tlv.value)) else { return nil }
+    convenience init?(domain: Domain, point: Data) throws {
+        guard let w = try? domain.decodePoint(Bytes(point)) else { return nil }
         try self.init(domain: domain, w: w)
     }
 

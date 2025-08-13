@@ -5,23 +5,27 @@
 //  Created by Timo Kallaste on 30.11.2023.
 //
 
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 
 extension DataProtocol where Self.Index == Int {
     var toHex: String {
         return map { String(format: "%02x", $0) }.joined()
     }
 
-    func chunked(into size: Int) -> [Bytes] {
-        return stride(from: 0, to: count, by: size).map {
-            Bytes(self[$0 ..< Swift.min($0 + size, count)])
+    func chunked(into size: Int) -> [SubSequence] {
+        stride(from: 0, to: count, by: size).map {
+            self[index(startIndex, offsetBy: $0) ..< index(startIndex, offsetBy: Swift.min($0 + size, count))]
         }
     }
 
     func removePadding() throws -> SubSequence {
-        for i in (0..<count).reversed() {
+        var i = endIndex
+        while i != startIndex {
+            formIndex(before: &i)
             if self[i] == 0x80 {
-                return self[0..<i]
+                return self[startIndex..<i]
+            } else if self[i] != 0x00 {
+                throw IdCardInternalError.dataPaddingError
             }
         }
         throw IdCardInternalError.dataPaddingError
@@ -53,8 +57,19 @@ extension DataProtocol where Self.Index == Int, Self : MutableDataProtocol {
         return result
     }
 
+    static func ^ <D: Collection>(lhs: Self, rhs: D) -> Self where D.Element == Self.Element {
+        precondition(lhs.count == rhs.count, "XOR operands must have equal length")
+        var result = lhs
+        for i in 0..<result.count {
+            result[result.index(result.startIndex, offsetBy: i)] ^= rhs[rhs.index(rhs.startIndex, offsetBy: i)]
+        }
+        return result
+    }
+
     mutating func increment() -> Self {
-        for i in (0..<count).reversed() {
+        var i = endIndex
+        while i != startIndex {
+            formIndex(before: &i)
             self[i] += 1
             if self[i] != 0 {
                 break
@@ -65,12 +80,15 @@ extension DataProtocol where Self.Index == Int, Self : MutableDataProtocol {
 
     func leftShiftOneBit() -> Self {
         var shifted = Self(repeating: 0x00, count: count)
-        let last = count - 1
-        for index in 0..<last {
-            shifted[index] = self[index] << 1
-            if (self[index + 1] & 0x80) != 0 {
-                shifted[index] += 0x01
+        let last = index(before: endIndex)
+        var i = startIndex
+        while i < last {
+            shifted[i] = self[i] << 1
+            let next = index(after: i)
+            if (self[next] & 0x80) != 0 {
+                shifted[i] += 0x01
             }
+            i = next
         }
         shifted[last] = self[last] << 1
         return shifted

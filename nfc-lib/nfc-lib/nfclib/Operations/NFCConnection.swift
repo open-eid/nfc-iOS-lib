@@ -30,4 +30,15 @@ class NFCConnection {
         }
         return tag
     }
+
+    func getCardCommands(_ session: NFCTagReaderSession, tag: NFCISO7816Tag, CAN: String) async throws -> CardCommands {
+        let reader = try await CardReaderNFC(tag, CAN: CAN)
+        guard let aid = Bytes(hex: tag.initialSelectedAID) else {
+            throw IdCardInternalError.connectionFailed
+        }
+        guard let cardCommands: CardCommands = Idemia(reader: reader, aid: aid) ?? Thales(reader: reader, aid: aid) else {
+            throw IdCardInternalError.cardNotSupported
+        }
+        return cardCommands
+    }
 }
