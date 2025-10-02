@@ -1,9 +1,21 @@
-//
-//  OperationAuthenticateWithWebEID.swift
-//  nfc-lib
-//
-//  Created by Riivo Ehrlich on 12.12.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 import Foundation
 import CoreNFC
@@ -14,14 +26,17 @@ import BigInt
 import Security
 internal import X509
 
-enum AuthenticateWithWebEidError: Error {
+public enum AuthenticateWithWebEidError: Error {
     case failedToReadPublicKey
     case failedToDetermineAlgorithm
     case failedToHashData
     case failedToMapAlgorithm
+    case failedCertificateExpired
+    case failedCertificateNotYetValid
 }
 
-class OperationAuthenticateWithWebEID: NSObject {
+@MainActor
+public class OperationAuthenticateWithWebEID: NSObject {
     private let CAN: String
     private let pin1: String
     private let challenge: String
@@ -30,14 +45,14 @@ class OperationAuthenticateWithWebEID: NSObject {
 
     private var session: NFCTagReaderSession?
     private var continuation: CheckedContinuation<WebEidData, Error>?
-    
-    init(CAN: String, pin1: String, challenge: String, origin: String) {
+
+    public init(CAN: String, pin1: String, challenge: String, origin: String) {
         self.CAN = CAN
         self.pin1 = pin1
         self.challenge = challenge
         self.origin = origin
     }
-    
+
     public func startReading() async throws -> WebEidData {
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
@@ -73,9 +88,10 @@ class OperationAuthenticateWithWebEID: NSObject {
     }
 }
 
-extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
-    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
-        Task {
+extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegate {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             defer {
                 self.session = nil
             }
@@ -86,100 +102,87 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
                 updateAlertMessage(step: 2)
                 let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
 
-                do {
-                    updateAlertMessage(step: 3)
-                    let certBytes = try await cardCommands.readAuthenticationCertificate()
-                    let authCertificate = try convertBytesToX509Certificate(certBytes)
-                    let authCertificateSignatureAlgorithmInfo = try getAlgorithmInfoFromCertificate(authCertificate)
+                updateAlertMessage(step: 3)
+                let certBytes = try await cardCommands.readAuthenticationCertificate()
+                let authCertificate = try convertBytesToX509Certificate(certBytes)
 
-                    guard let publicKey = SecCertificateCopyKey(authCertificate) else {
-                        // TODO: Failed to process public key, handle error
-                        let errorMessage = "Andmete lugemine ebaõnnestus"
-                        session.invalidate(errorMessage: errorMessage)
-                        continuation?.resume(throwing: AuthenticateWithWebEidError.failedToReadPublicKey)
-                        return
-                    }
+                // assuming authCertificate is `Certificate` from Swift-Certificates
+                let certificate = try Certificate(authCertificate)
+                let notAfter = certificate.notValidAfter
+                let notBefore = certificate.notValidBefore
 
-                    guard let keyAlgorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
-                        // TODO: Implement error handling
-                        let errorMessage = "Andmete lugemine ebaõnnestus"
-                        session.invalidate(errorMessage: errorMessage)
-                        continuation?.resume(throwing: AuthenticateWithWebEidError.failedToDetermineAlgorithm)
-                        return
-                    }
-
-                    guard let hashLength = hashLengthFromInt(keyAlgorithmData.keyLength),
-                          let originData = origin.data(using: .utf8),
-                          let challengeData = challenge.data(using: .utf8),
-                          let signatureHashLenght = hashLengthFromInt(authCertificateSignatureAlgorithmInfo.bitSize),
-                          let originHash = sha(hashLength: signatureHashLenght, data: originData),
-                          let challengeHash = sha(hashLength: signatureHashLenght, data: challengeData),
-                          let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
-                    else {
-                        let errorMessage = "Andmete lugemine ebaõnnestus"
-                        session.invalidate(errorMessage: errorMessage)
-                        continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
-                        return
-                    }
-
-                    do {
-                        updateAlertMessage(step: 4)
-                        let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
-                        let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
-
-                        let webEidData = WebEidData(
-                            unverifiedCertificate: certBytes.base64EncodedString(),
-                            algorithm: authCertificateSignatureAlgorithmInfo.name,
-                            signature: authResult.base64EncodedString(),
-                            signingCertificate:  signingCertificateBytes.base64EncodedString()
-                        )
-                        continuation?.resume(returning: webEidData)
-                        session.alertMessage = "Andmed loetud"
-                        session.invalidate()
-                    } catch {
-                        session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
-                        continuation?.resume(throwing: error)
-                    }
-                } catch {
-                    session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
-                    continuation?.resume(throwing: error)
+                guard Date() >= notBefore else {
+                    let errorMessage = "Sertifikaat pole veel kehtiv"
+                    session.invalidate(errorMessage: errorMessage)
+                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateNotYetValid)
+                    return
                 }
+
+                guard Date() <= notAfter else {
+                    let errorMessage = "Sertifikaat on aegunud"
+                    session.invalidate(errorMessage: errorMessage)
+                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateExpired)
+                    return
+                }
+
+                guard let publicKey = SecCertificateCopyKey(authCertificate) else {
+                    // TODO: Failed to process public key, handle error
+                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    session.invalidate(errorMessage: errorMessage)
+                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToReadPublicKey)
+                    return
+                }
+
+                guard let keyAlgorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
+                    // TODO: Implement error handling
+                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    session.invalidate(errorMessage: errorMessage)
+                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToDetermineAlgorithm)
+                    return
+                }
+
+                guard let hashLength = hashLengthFromInt(keyAlgorithmData.keyLength),
+                      let originData = origin.data(using: .utf8),
+                      let challengeData = challenge.data(using: .utf8),
+                      let originHash = sha(hashLength: hashLength, data: originData),
+                      let challengeHash = sha(hashLength: hashLength, data: challengeData),
+                      let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
+                else {
+                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    session.invalidate(errorMessage: errorMessage)
+                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
+                    return
+                }
+
+                updateAlertMessage(step: 4)
+                let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
+                let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
+
+                let webEidData = WebEidData(
+                    unverifiedCertificate: certBytes.base64EncodedString(),
+                    algorithm: keyAlgorithmData.algorithm,
+                    signature: authResult.base64EncodedString(),
+                    signingCertificate: signingCertificateBytes.base64EncodedString()
+                )
+                continuation?.resume(returning: webEidData)
+                session.alertMessage = "Andmed loetud"
+                session.invalidate()
             } catch {
+                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 continuation?.resume(throwing: error)
             }
-            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
         }
     }
 
-    func getAlgorithmInfoFromCertificate(_ secCertificate: SecCertificate) throws -> SignatureAlgorithmInfo {
-        let certificate = try Certificate(secCertificate)
-
-        switch certificate.signatureAlgorithm {
-        case .ecdsaWithSHA256:
-            return SignatureAlgorithmInfo(name: "ES256", bitSize: 256)
-        case .ecdsaWithSHA384:
-            return SignatureAlgorithmInfo(name: "ES384", bitSize: 384)
-        case .ecdsaWithSHA512:
-            return SignatureAlgorithmInfo(name: "ES512", bitSize: 512)
-        case .sha256WithRSAEncryption:
-            return SignatureAlgorithmInfo(name: "RS256", bitSize: 256)
-        case .sha384WithRSAEncryption:
-            return SignatureAlgorithmInfo(name: "RS384", bitSize: 384)
-        case .sha512WithRSAEncryption:
-            return SignatureAlgorithmInfo(name: "RS512", bitSize: 512)
-        default:
-            throw AuthenticateWithWebEidError.failedToMapAlgorithm
-        }
-    }
-
-    func getAlgorithmNameTypeAndLength(from key: SecKey) -> (algorithm: String, keyLength: Int)? {
+    public func getAlgorithmNameTypeAndLength(from key: SecKey) -> (algorithm: String, keyLength: Int)? {
         // Get the algorithm type from the key
-        if let algorithmAttributes = SecKeyCopyAttributes(key) as? [String: Any], let algorithmType = algorithmAttributes[kSecAttrKeyType as String] as? String {
-            
+        if let algorithmAttributes = SecKeyCopyAttributes(key) as? [String: Any], let algorithmType =
+            algorithmAttributes[kSecAttrKeyType as String] as? String {
+
             // Get the algorithm name based on the type
             var algorithmName = ""
             var keyLength = 0
-            
+
             switch algorithmType {
             case String(kSecAttrKeyTypeRSA):
                 algorithmName = rsaAlgorithmName
@@ -190,20 +193,20 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
             default:
                 algorithmName = unknownAlgorithmName
             }
-            
+
             return (algorithm: algorithmName, keyLength: keyLength)
         } else {
             return nil
         }
     }
-    
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) { }
-    
-    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+
+    public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
+
+    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
         self.session = nil
     }
 
-    func mapToAlgorithm(algorithm: String, bitLength: Int) -> String? {
+    public func mapToAlgorithm(algorithm: String, bitLength: Int) -> String? {
         switch algorithm {
         case ecAlgorithmName:
             return "ES\(bitLength)"
@@ -215,7 +218,7 @@ extension OperationAuthenticateWithWebEID: NFCTagReaderSessionDelegate {
     }
 }
 
-struct SignatureAlgorithmInfo {
+public struct SignatureAlgorithmInfo {
     let name: String
     let bitSize: Int
 }
