@@ -1,11 +1,28 @@
 //
 //  AES.swift
-//  nfc-lib
+//  IdCardLib
 //
-//  Created by Timo Kallaste on 30.11.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 import CommonCrypto
+import Foundation
 internal import SwiftECC
 
 class AES {
@@ -15,11 +32,11 @@ class AES {
 
     public class CBC {
         private let key: any DataType
-        private let iv: any DataType
+        private let ivVal: any DataType
 
-        init<K: DataType, I: DataType>(key: K, iv: I = Zero) {
+        init<K: DataType, I: DataType>(key: K, ivVal: I = Zero) {
             self.key = key
-            self.iv = iv
+            self.ivVal = ivVal
         }
 
         func encrypt<T: DataType>(_ data: T) throws -> Bytes {
@@ -33,7 +50,7 @@ class AES {
         private func crypt<T: DataType>(data: T, operation: Int) throws -> Bytes {
             try Bytes(unsafeUninitializedCapacity: data.count + BlockSize) { buffer, initializedCount in
                 let status = data.withUnsafeBytes { dataBytes in
-                    iv.withUnsafeBytes { ivBytes in
+                    ivVal.withUnsafeBytes { ivBytes in
                         key.withUnsafeBytes { keyBytes in
                             CCCrypt(
                                 CCOperation(operation),
@@ -56,39 +73,56 @@ class AES {
     }
 
     public class CMAC {
-        static let Rb: Bytes = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87]
+        static let RBytes: Bytes = [
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x87
+        ]
         let cipher: AES.CBC
-        let K1: Bytes
-        let K2: Bytes
+        let k1Bytes: Bytes
+        let k2Bytes: Bytes
 
         init<T: DataType>(key: T) throws {
             cipher = AES.CBC(key: key)
-            let L = try cipher.encrypt(Zero)
-            K1 = (L[0] & 0x80) == 0 ? L.leftShiftOneBit() : L.leftShiftOneBit() ^ CMAC.Rb
-            K2 = (K1[0] & 0x80) == 0 ? K1.leftShiftOneBit() : K1.leftShiftOneBit() ^ CMAC.Rb
+            let LBytes = try cipher.encrypt(Zero)
+            k1Bytes = (LBytes[0] & 0x80) == 0 ? LBytes.leftShiftOneBit() : LBytes.leftShiftOneBit() ^ CMAC.RBytes
+            k2Bytes = (k1Bytes[0] & 0x80) == 0 ? k1Bytes.leftShiftOneBit() : k1Bytes.leftShiftOneBit() ^ CMAC.RBytes
         }
 
         func authenticate<T: DataType>(bytes: T, count: Int = 8) throws -> Bytes.SubSequence where T.Index == Int {
             var blocks = bytes.chunked(into: BlockSize)
-            let M_last: Bytes
+            let mLast: Bytes
             if let last = blocks.popLast() {
                 if bytes.count % BlockSize == 0 {
-                    M_last = Bytes(last) ^ K1
+                    mLast = Bytes(last) ^ k1Bytes
                 } else {
-                    M_last = Bytes(last).addPadding() ^ K2
+                    mLast = Bytes(last).addPadding() ^ k2Bytes
                 }
             } else {
-                M_last = Bytes().addPadding() ^ K1
+                mLast = Bytes().addPadding() ^ k1Bytes
             }
 
-            var x = Bytes(repeating: 0x00, count: BlockSize)
-            for M_i in blocks {
-                let y = x ^ M_i
-                x = try cipher.encrypt(y)
+            var xVal = Bytes(repeating: 0x00, count: BlockSize)
+            for mIndex in blocks {
+                let yVal = xVal ^ mIndex
+                xVal = try cipher.encrypt(yVal)
             }
-            let y = x ^ M_last
-            let T = try cipher.encrypt(y)
-            return T[0..<count]
+            let yVal = xVal ^ mLast
+            let tBytes = try cipher.encrypt(yVal)
+            return tBytes[0..<count]
         }
     }
 }

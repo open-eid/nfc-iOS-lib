@@ -1,9 +1,21 @@
-//
-//  OperationSignHash.swift
-//  nfc-lib
-//
-//  Created by Timo Kallaste on 03.12.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 import Foundation
 import CoreNFC
@@ -13,7 +25,8 @@ internal import SwiftECC
 import BigInt
 import CryptoKit
 
-class OperationSignHash: NSObject {
+@MainActor
+public class OperationSignHash: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
     private var PIN: String = ""
@@ -57,10 +70,10 @@ class OperationSignHash: NSObject {
     }
 }
 
-extension OperationSignHash: NFCTagReaderSessionDelegate {
-    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
-     
-        Task {
+extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+
+        Task { @MainActor in
             do {
                 updateAlertMessage(step: 1)
                 guard let hashToSign else {
@@ -81,9 +94,9 @@ extension OperationSignHash: NFCTagReaderSessionDelegate {
         }
     }
 
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) { }
+    public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
         self.session = nil
     }
 }
