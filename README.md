@@ -56,7 +56,14 @@ The goal is to build an `.xcframework` bundle that can be added as a dependency 
 The NFC library is now integrated into your application.  
 
 # Library Interfaces for ID Card Communication
-All public operations are defined in the `CardOperations` protocol.  
+The library provides the following operation classes for ID card communication:
+- `OperationReadPublicData` - Reads cardholder information
+- `OperationReadCertificate` - Extracts authentication/signing certificates
+- `OperationSignHash` - Performs a signing operation using the provided hash and PIN
+- `OperationUnblockPin` - Unblock PIN1 or PIN2 using PUK
+- `OperationAuthenticateWithWebEID` - Web-eID authentication flow
+
+For a complete integration example, see the demo app's `CardOperations` protocol (`mvoting-nfc/nfc-demo/CardOperations.swift`) and its implementation in `Operator.swift`, which provides a convenient wrapper around these operations.
 
 The following operations are provided by the library:  
 
