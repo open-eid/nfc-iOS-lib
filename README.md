@@ -63,9 +63,7 @@ The library provides the following operation classes for ID card communication:
 - `OperationUnblockPin` - Unblock PIN1 or PIN2 using PUK
 - `OperationAuthenticateWithWebEID` - Web-eID authentication flow
 
-For a complete integration example, see the demo app's `CardOperations` protocol (`mvoting-nfc/nfc-demo/CardOperations.swift`) and its implementation in `Operator.swift`, which provides a convenient wrapper around these operations.
-
-The following operations are provided by the library:  
+For a complete integration example, see the demo app's `CardOperations` protocol (`mvoting-nfc/nfc-demo/CardOperations.swift`) and its implementation in `Operator.swift`, which provides a convenient wrapper around these operations: 
 
 Returns whether NFC is supported on the device:  
 ```swift
