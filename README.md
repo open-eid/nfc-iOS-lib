@@ -44,7 +44,7 @@ You must declare NFC usage in your **Info.plist** file to explain why the applic
 ### Build the Library
 The goal is to build an `.xcframework` bundle that can be added as a dependency to other projects.
 
-- Run the script `build_xcframework.sh`, located in the project root.  
+- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`.  
   - After execution, the project’s **build** folder will contain the file **nfclib.xcframework**.  
 
 ### Add the Library to the Application
@@ -67,25 +67,35 @@ public func isNFCSupported() -> Bool
 
 Asynchronously reads public information about the cardholder from the card:
 ```swift
-public func readPublicInfo(CAN: String) async throws -> CardInfo`
+public func readPublicInfo(CAN: String) async throws -> CardInfo
 ```
 
 Asynchronously reads the authentication certificate from the card:
 ```swift
-public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate`
+public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
 ```
 
 Asynchronously reads the signing certificate from the card:
 ```swift
-public func readSigningCertificate(CAN: String) async throws -> SecCertificate`
+public func readSigningCertificate(CAN: String) async throws -> SecCertificate
 ```
 
 Retrieves data required for WebEID authentication, using the provided credentials and challenge:
 ```swift
-public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData`
+public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData
 ```
 
 Performs a signing operation using a precomputed hash (only SHA-384 supported) and the PIN2 code:
 ```swift
-public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data`
+public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+```
+
+Unblocks PIN1 using the PUK code and sets a new PIN:
+```swift
+public func unblockPin1(CAN: String, puk: String, newCode: String) async throws
+```
+
+Unblocks PIN2 using the PUK code and sets a new PIN:
+```swift
+public func unblockPin2(CAN: String, puk: String, newCode: String) async throws
 ```
