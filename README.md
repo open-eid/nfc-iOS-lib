@@ -1,79 +1,106 @@
-- [Ülevaade](#ülevaade)
-- [Demorakenduse jooksutamise juhend](#demorakenduse-jooksutamise-juhend)
-- [Integreerimise juhend](#integreerimise-juhend)
-  - [Rakenduse nõuded](#rakenduse-nõuded)
-    - [Lubada NFC Võimekus](#lubada-nfc-võimekus)
-    - [Uuendada Info.plist](#uuendada-infoplist)
-    - [Teegi ehitamine](#teegi-ehitamine)
-    - [Teegi lisamine rakendusse](#teegi-lisamine-rakendusse)
-- [Teegi liidesed id-kaardiga suhtluseks](#teegi-liidesed-id-kaardiga-suhtluseks)
+- [Overview](#overview)  
+- [Demo Application Run Guide](#demo-application-run-guide)  
+- [Integration Guide](#integration-guide)  
+  - [Application Requirements](#application-requirements)  
+    - [Enable NFC Capability](#enable-nfc-capability)  
+    - [Update Info.plist](#update-infoplist)  
+    - [Build the Library](#build-the-library)  
+    - [Add the Library to the Application](#add-the-library-to-the-application)  
+- [Library Interfaces for ID Card Communication](#library-interfaces-for-id-card-communication)  
 
-# Ülevaade 
+# Overview
 
-NFC-ID teek pakub võimalust kasutada ID-kaardi autentimis- ja signeerimisfunktsionaalsust üle NFC liidese. Teegist on kaks versiooni - Android ja iOS platvormile.
+The NFC-ID library provides functionality to use ID card authentication and digital signing over the NFC interface. Two platform-specific versions of the library are available – one for Android and one for iOS.  
 
-NFC-ID teek ei ole mõeldud avalikuks kasutamiseks. Tegemist on tehnilise taseme teegiga, mis delegeerib kasutajaga suhtlemise rakendusele. Pikema aja jooksul ei ole ohutu võimaldada lõppkasutajal sisestada oma ID-kaardi PIN-koode igasse mobiilirakendusse. ID-kaardiga suhtluseks, usaldusväärse kasutajaliidese ning muude vajalike funktsioonide jaoks on vajalik luua tulevikus spetsiaalne mobiilirakendus. Selline lahendus võimaldab edaspidi mobiilirakendust kiiremini uuendada ning rünnete korral kaitsemeetmeid kohandada ja täiendada. 
-NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-kaarti m valijarakenduses. 
+The NFC-ID library is not intended for public use. It is a low-level technical library that delegates user interaction to the application itself. In the long term, it is not safe to allow end users to enter their ID card PIN codes directly into every mobile app. For secure ID card interaction, a trusted user interface, and additional required features, a dedicated mobile application must be developed in the future. Such a solution would also allow faster updates to the application and enable quick adjustments of countermeasures in case of attacks.  
 
-# Demorakenduse jooksutamise juhend
-- Avada mvtng-nfc-demo.xcworkspace. Antud töökeskkond sisaldab endas nii demorakendust kui nfclib teeki.
-- Oodata, kuni Swift Package Manager'i sõltuvused laetakse alla
-- Product -> Run
+The NFC-ID library was originally developed within the m-valimiste project, based on the need to use the ID card inside the m-Voting client application.  
 
-Simulaator pole toetatud, sest simulaatoril puudub NFC tugi.
+# Demo Application Run Guide
+- Open **mvtng-nfc-demo.xcworkspace**. This workspace includes both the demo app and the `nfclib` library.  
+- Wait until **Swift Package Manager** dependencies are fully downloaded.  
+- Select **Product → Run**.  
 
-# Integreerimise juhend
+⚠️ The simulator is not supported, since it does not provide NFC functionality.  
 
-## Rakenduse nõuded
-### Lubada NFC Võimekus
-Xcode projektis tuleb seadistada NFC võimekuse loa küsimine
+# Integration Guide
 
-- Projekti navigaatoris valida oma projekt.
-- Valida oma rakenduse sihtmärk ja seejärel minna vahelehele "Signing & Capabilities".
-- Klikkida nupul "+ Capability".
-- Otsida "Near Field Communication Tag Reading" ja lisada see oma projekti.
+## Application Requirements
+### Enable NFC Capability
+You must configure your Xcode project to request NFC capability access:
 
-### Uuendada Info.plist
-Info.plist failis peab deklareerima NFC kasutuse, et selgitada, miks rakendus vajab juurdepääsu sellele tehnoloogiale.
+- In the project navigator, select your project.  
+- Select your app target, then go to the **Signing & Capabilities** tab.  
+- Click **+ Capability**.  
+- Search for **Near Field Communication Tag Reading** and add it to your project.  
 
-- Avada oma Info.plist fail.
-- Lisada uus võti Privacy - NFC Scan Usage Description (NFCReaderUsageDescription).
-- Määrata selle väärtuseks string, mis kirjeldab, miks rakendus vajab juurdepääsu NFC-le. See kirjeldus kuvatakse kasutajale esmakordselt, kui rakendus üritab NFC-d kasutada.
+### Update Info.plist
+You must declare NFC usage in your **Info.plist** file to explain why the application requires access to this technology.
 
-### Teegi ehitamine
-Eesmärk on ehitada .xcframework failikogumik, mida saab lisata sõltuvusena teistesse projektidesse.
+- Open your **Info.plist** file.  
+- Add a new key: **Privacy – NFC Scan Usage Description** (`NFCReaderUsageDescription`).  
+- Set its value to a string explaining why the app requires NFC access. This text will be displayed to the user the first time the app attempts to use NFC.  
 
-- Jooksuta skripti nimega build_xcframework.sh, mis asub projekti kaustas
-  - Selle tagajärjel ilmub projekti kaustas build kausta nflib.xcframework
+### Build the Library
+The goal is to build an `.xcframework` bundle that can be added as a dependency to other projects.
 
-### Teegi lisamine rakendusse
-- Ava projekt, kuhu soovid integreerida nfclib teegi
-- Vali projekt ja TARGETS menüü all õige programm
-- Selle tagajärjel peaks olema nähtav General osa sihtprogrammi kohta
-- Otsida Frameworks and Libraries
-- Vajutada + -> Add Other... -> Add Files -> Valida nfclib.xcframework
+- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`.  
+  - After execution, the project’s **build** folder will contain the file **nfclib.xcframework**.  
 
-Nüüd on nfc teek rakendusse integreeritud.
+### Add the Library to the Application
+- Open the project where you want to integrate the `nfclib` library.  
+- Select the project, then under **TARGETS**, choose the correct target.  
+- In the **General** tab of the target, find the **Frameworks and Libraries** section.  
+- Click **+ → Add Other… → Add Files… → Select nfclib.xcframework**.  
 
-# Teegi liidesed id-kaardiga suhtluseks
-Kõik avalikud operatsioonid on kirjeldatud `CardOperations` protokollis.
+The NFC library is now integrated into your application.  
 
-Järgnevalt on nimetatud operatsioonid, mida teek võimaldab.
+# Library Interfaces for ID Card Communication
+The library provides the following operation classes for ID card communication:
+- `OperationReadPublicData` - Reads cardholder information
+- `OperationReadCertificate` - Extracts authentication/signing certificates
+- `OperationSignHash` - Performs a signing operation using the provided hash and PIN
+- `OperationUnblockPin` - Unblock PIN1 or PIN2 using PUK
+- `OperationAuthenticateWithWebEID` - Web-eID authentication flow
 
-Tagastab, kas NFC on seadmel toetatud.
-`public func isNFCSupported() -> Bool`
+For a complete integration example, see the demo app's `CardOperations` protocol (`mvoting-nfc/nfc-demo/CardOperations.swift`) and its implementation in `Operator.swift`, which provides a convenient wrapper around these operations: 
 
-Loeb asünkroonselt kaardilt avalikku teavet kaardi omaniku kohta
-`public func readPublicInfo(CAN: String) async throws -> CardInfo`
+Returns whether NFC is supported on the device:  
+```swift
+public func isNFCSupported() -> Bool
+```
 
-Loeb asünkroonselt kaardilt autentimise sertifikaadi.
-`public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate`
+Asynchronously reads public information about the cardholder from the card:
+```swift
+public func readPublicInfo(CAN: String) async throws -> CardInfo
+```
 
-Loeb asünkroonselt kaardilt allkirjastamise sertifikaadi.
-`public func readSigningCertificate(CAN: String) async throws -> SecCertificate`
+Asynchronously reads the authentication certificate from the card:
+```swift
+public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
+```
 
-Hangib andmeid WebEID autentimiseks, kasutades antud volikirju ja väljakutset.
-`public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData`
+Asynchronously reads the signing certificate from the card:
+```swift
+public func readSigningCertificate(CAN: String) async throws -> SecCertificate
+```
 
-Viib läbi allkirjastamise operatsiooni, kasutades eelnevalt arvutatud räsi (toetatud on ainult SHA-384) ja PIN-koodi
-`public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data`
+Retrieves data required for WebEID authentication, using the provided credentials and challenge:
+```swift
+public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData
+```
+
+Performs a signing operation using a precomputed hash (only SHA-384 supported) and the PIN2 code:
+```swift
+public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+```
+
+Unblocks PIN1 using the PUK code and sets a new PIN:
+```swift
+public func unblockPin1(CAN: String, puk: String, newCode: String) async throws
+```
+
+Unblocks PIN2 using the PUK code and sets a new PIN:
+```swift
+public func unblockPin2(CAN: String, puk: String, newCode: String) async throws
+```
