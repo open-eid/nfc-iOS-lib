@@ -14,6 +14,8 @@
 		139195AE2AFA29CC00EDA022 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139195AD2AFA29CC00EDA022 /* ContentView.swift */; };
 		139195B02AFA29CD00EDA022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 139195AF2AFA29CD00EDA022 /* Assets.xcassets */; };
 		139195B32AFA29CD00EDA022 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 139195B22AFA29CD00EDA022 /* Preview Assets.xcassets */; };
+		1A0AA6F32E8EB4D2000B11FA /* CardOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */; };
+		1A0AA6F42E8EB4D2000B11FA /* Operator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0AA6F12E8EB4D2000B11FA /* Operator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -40,6 +42,8 @@
 		139195AF2AFA29CD00EDA022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		139195B22AFA29CD00EDA022 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		1392583F2B04B06A00AD38EA /* nfc-demo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "nfc-demo.entitlements"; sourceTree = "<group>"; };
+		1A0AA6F12E8EB4D2000B11FA /* Operator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operator.swift; sourceTree = "<group>"; };
+		1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardOperations.swift; sourceTree = "<group>"; };
 		5A2C028B2B060E9D00C6D249 /* SkSigningLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = SkSigningLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A9969882B03B9A4002A1060 /* nfc_lib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = nfc_lib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -83,6 +87,8 @@
 				13176D742B3193F70093D806 /* CardInfoView.swift */,
 				139195AF2AFA29CD00EDA022 /* Assets.xcassets */,
 				139195B12AFA29CD00EDA022 /* Preview Content */,
+				1A0AA6F12E8EB4D2000B11FA /* Operator.swift */,
+				1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */,
 			);
 			path = "nfc-demo";
 			sourceTree = "<group>";
@@ -182,6 +188,8 @@
 			files = (
 				139195AE2AFA29CC00EDA022 /* ContentView.swift in Sources */,
 				139195AC2AFA29CC00EDA022 /* nfc_demoApp.swift in Sources */,
+				1A0AA6F32E8EB4D2000B11FA /* CardOperations.swift in Sources */,
+				1A0AA6F42E8EB4D2000B11FA /* Operator.swift in Sources */,
 				13176D752B3193F70093D806 /* CardInfoView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

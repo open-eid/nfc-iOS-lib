@@ -23,19 +23,26 @@ import CommonCrypto
 import CryptoTokenKit
 internal import SwiftECC
 import BigInt
-import CryptoKit
+import Security
+
+public enum UnblockPINError: Error {
+    case missingRequiredParameter
+    case failed
+    case general
+}
 
 @MainActor
-public class OperationSignHash: NSObject {
+public class OperationUnblockPin: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
-    private var PIN: String = ""
-    private var hashToSign: Data?
+    private var codeType: CodeType?
+    private var puk: String?
+    private var newPin: String?
     private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
-    private var continuation: CheckedContinuation<Data, Error>?
-    private var connection = NFCConnection()
+    private let connection = NFCConnection()
+    private var continuation: CheckedContinuation<Void, Error>?
 
-    public func startSigning(CAN: String, PIN2: String, hash: Data) async throws -> Data {
+    public func startReading(CAN: String, codeType: CodeType, puk: String, newPin: String) async throws {
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
@@ -44,52 +51,47 @@ public class OperationSignHash: NSObject {
                 continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
-            self.CAN = CAN
-            self.PIN = PIN2
-            self.hashToSign = hash
 
+            self.CAN = CAN
+            self.codeType = codeType
+            self.puk = puk
+            self.newPin = newPin
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
-            updateAlertMessage(step: 0)
+            session?.alertMessage = nfcMessage
             session?.begin()
         }
     }
-
-    private func updateAlertMessage(step: Int) {
-        let stepMessages = [
-            "Palun asetage oma ID-kaart vastu nutiseadet.",
-            "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse.",
-            "Andmete lugemine käib, palun oodake.",
-            "Signeerimine käib, palun oodake."
-        ]
-
-        let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
-        let progressBar = ProgressBar(currentStep: step)
-        var message = stepMessage
-        message += "\n\n\(progressBar.generate())"
-        session?.alertMessage = message
-    }
 }
 
-extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
+extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            defer {
+                self.session = nil
+            }
 
-        Task { @MainActor in
+            guard let codeType = self.codeType, let puk = self.puk, let newPin = self.newPin else {
+                self.continuation?.resume(throwing: UnblockPINError.missingRequiredParameter)
+                session.invalidate(errorMessage: "PINi vahetamine ebaõnnestus")
+                return
+            }
             do {
-                updateAlertMessage(step: 1)
-                guard let hashToSign else {
-                    return
+                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                let tag = try await self.connection.setup(session, tags: tags)
+                let cardCommands = try await self.connection.getCardCommands(session, tag: tag, CAN: self.CAN)
+                do {
+                    try await cardCommands.unblockCode(codeType, puk: puk, newCode: newPin)
+                } catch {
+                    throw UnblockPINError.failed
                 }
-                let tag = try await connection.setup(session, tags: tags)
-                updateAlertMessage(step: 2)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
-                updateAlertMessage(step: 3)
-                let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: PIN)
-                continuation?.resume(with: .success(signatureValue))
-                session.alertMessage = "Andmed loetud"
+
+                self.continuation?.resume(with: .success(()))
+                session.alertMessage = "PIN vahetatud"
                 session.invalidate()
             } catch {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
-                continuation?.resume(throwing: error)
+                session.invalidate(errorMessage: "PINi vahetamine ebaõnnestus")
+                self.continuation?.resume(throwing: error)
             }
         }
     }

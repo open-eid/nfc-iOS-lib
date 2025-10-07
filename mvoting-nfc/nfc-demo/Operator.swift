@@ -1,10 +1,23 @@
-//
-//  Operator.swift
-//  nfc-lib
-//
-//  Created by Timo Kallaste on 30.11.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
+import nfclib
 import Foundation
 import Security
 import CoreNFC
@@ -75,6 +88,28 @@ extension Operator: CardOperations {
         do {
             let signature = try await OperationSignHash().startSigning(CAN: CAN, PIN2: pin2, hash: hash)
             return signature
+        } catch {
+            guard let e = error as? IdCardInternalError else {
+                throw IdCardError.sessionError
+            }
+            throw e.getIdCardError()
+        }
+    }
+
+    public func unblockPin1(CAN: String, puk: String, newCode: String) async throws {
+        do {
+            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode)
+        } catch {
+            guard let e = error as? IdCardInternalError else {
+                throw IdCardError.sessionError
+            }
+            throw e.getIdCardError()
+        }
+    }
+
+    public func unblockPin2(CAN: String, puk: String, newCode: String) async throws {
+        do {
+            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode)
         } catch {
             guard let e = error as? IdCardInternalError else {
                 throw IdCardError.sessionError

@@ -1,24 +1,33 @@
-//
-//  OperationReadPublicData.swift
-//  nfc-lib
-//
-//  Created by Timo Kallaste on 30.11.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 import Foundation
 import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
-@_implementationOnly import SwiftECC
+internal import SwiftECC
 import BigInt
 
-enum ReadPublicDataError: Error {
-    case general
-}
-
-class OperationReadPublicData: NSObject {
+@MainActor final public class OperationReadPublicData: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
+    // TODO: Use a proper message that is localised
     private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<CardInfo, Error>?
@@ -28,7 +37,6 @@ class OperationReadPublicData: NSObject {
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                // TODO: Handle this case properly
                 continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
@@ -41,41 +49,18 @@ class OperationReadPublicData: NSObject {
     }
 }
 
-extension OperationReadPublicData: NFCTagReaderSessionDelegate {
-    func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+extension OperationReadPublicData: @MainActor NFCTagReaderSessionDelegate {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task {
             do {
                 session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
                 let tag = try await connection.setup(session, tags: tags)
-                if let (ksEnc, ksMac) = try await OperationAuthenticate().mutualAuthenticate(tag: tag, CAN: CAN) {
-                    print("Mutual authentication successfull")
-                    let card = NFCIdCard(ksEnc: ksEnc, ksMac: ksMac, SSC: Bytes(repeating: 0x00, count: AES.BlockSize))
-                    session.alertMessage = "Selecting File"
-                    try await card.selectDF(tag: tag, file: Data()) // Select MF (Master File)
-                    try await card.selectDF(tag: tag, file: Data([0x50, 0x00])) // Select DF 5000
-                    print("DF 5000 selected")
-                    session.alertMessage = "Reading Data"
-                    do {
-                        let givenName = try await card.read(field: .firstName, tag: tag)
-                        let surname = try await card.read(field: .surname, tag: tag)
-                        let personalCode = try await card.read(field: .personalCode, tag: tag)
-                        let citizenship = try await card.read(field: .citizenship, tag: tag)
-                        let dateOfExpiry = try await card.read(field: .dateOfExpiry, tag: tag)
+                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                let cardInfo = try await cardCommands.readPublicData()
 
-                        let cardInfo = CardInfo(givenName: givenName,
-                                                surname: surname,
-                                                personalCode: personalCode,
-                                                citizenship: citizenship,
-                                                dateOfExpiry: dateOfExpiry)
-                        continuation?.resume(with: .success(cardInfo))
-                        session.alertMessage = "Andmed loetud"
-                        session.invalidate()
-                    } catch {
-                        continuation?.resume(throwing: error)
-                    }
-                } else {
-                    continuation?.resume(throwing: IdCardInternalError.couldNotVerifyChipsMAC)
-                }
+                continuation?.resume(with: .success(cardInfo))
+                session.alertMessage = "Andmed loetud"
+                session.invalidate()
             } catch {
                 session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
                 continuation?.resume(throwing: error)
@@ -83,13 +68,9 @@ extension OperationReadPublicData: NFCTagReaderSessionDelegate {
         }
     }
 
+    public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-
-    func tagReaderSessionDidBecomeActive(_ session: NFCTagReaderSession) {
-        // TODO: Anyhing we want to do here?
-    }
-
-    func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
         self.session = nil
     }
 }

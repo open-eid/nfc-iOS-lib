@@ -1,9 +1,21 @@
-//
-//  ContentView.swift
-//  mvoting-nfc
-//
-//  Created by Timo Kallaste on 07.11.2023.
-//
+/*
+ * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
 
 import SwiftUI
 import CryptoKit
@@ -16,12 +28,13 @@ struct ContentView: View {
     }
 
     @StateObject private var viewModel = ViewModel()
-    @State private var can: String = "566195"
     @State private var challenge: String = "fake_challenge"
     @State private var origin: String = "https://valimised.ee"
     @State private var dataToSign: String = "JÕEORG"
+    @State private var can: String = ""
     @State private var pin1: String = ""
     @State private var pin2: String = ""
+    @State private var puk: String = ""
     @State private var selectedMethod: HashMethod = .sha254
     let methods = HashMethod.allCases
 
@@ -40,24 +53,10 @@ struct ContentView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
                 }
-                VStack {
-                    Text("CAN:")
-                    TextField("CAN", text: $can)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                }
-                VStack {
-                    Text("PIN1:")
-                    SecureField("PIN1", text: $pin1)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                }
-                VStack {
-                    Text("PIN2:")
-                    SecureField("PIN2", text: $pin2)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding()
-                }
+                codeTextField(placeholder: "CAN", text: $can)
+                codeTextField(placeholder: "PIN1", text: $pin1)
+                codeTextField(placeholder: "PIN2", text: $pin2)
+                codeTextField(placeholder: "PUK", text: $puk)
                 VStack {
                     Text("Data to sign (text)")
                     TextField("Data to sign", text: $dataToSign)
@@ -138,6 +137,24 @@ struct ContentView: View {
                         await viewModel.sign(can: can, pin2: pin2)
                     }
                 }
+                Button("Unblock PIN1") {
+                    guard can.count >= 6,
+                          puk.count >= 8,
+                          pin1.count >= 4
+                    else { return }
+                    Task {
+                        await viewModel.unblockPin1(can: can, puk: puk, newCode: pin1)
+                    }
+                }
+                Button("Unblock PIN2") {
+                    guard can.count >= 6,
+                          puk.count >= 8,
+                          pin2.count >= 5
+                    else { return }
+                    Task {
+                        await viewModel.unblockPin2(can: can, puk: puk, newCode: pin2)
+                    }
+                }
             }
             .tint(.yellow)
             .padding()
@@ -170,6 +187,16 @@ struct ContentView: View {
                 .textSelection(.enabled)
         }
 
+    }
+
+    private func codeTextField(placeholder: String, text: Binding<String>) -> some View {
+        VStack {
+            Text("\(placeholder):")
+            TextField(placeholder, text: text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .keyboardType(.numberPad)
+                .padding()
+        }
     }
 }
 
@@ -224,12 +251,12 @@ extension ContentView {
 
         func readSigningCertificate(can: String) async {
             do {
-                let cert = try await cardOperator.readAuthenticationCertificate(CAN: can)
+                let cert = try await cardOperator.readSigningCertificate(CAN: can)
                 guard let certSummary = SecCertificateCopySubjectSummary(cert) as? String else {
                     self.signingCert = "Failed!"
                     return
                 }
-                self.authCert = "summary: \(certSummary)"
+                self.signingCert = "summary: \(certSummary)"
             } catch {
                 // Handle error here
             }
@@ -250,6 +277,22 @@ extension ContentView {
             do {
                 let webEidResult = try await cardOperator.loadWebEIDAuthenticationData(CAN: can, pin1: pin1, challenge: challenge, origin: origin)
                 self.webEidData = webEidResult
+            } catch {
+                // Handle error here
+            }
+        }
+
+        func unblockPin1(can: String, puk: String, newCode: String) async {
+            do {
+                try await cardOperator.unblockPin1(CAN: can, puk: puk, newCode: newCode)
+            } catch {
+                // Handle error here
+            }
+        }
+
+        func unblockPin2(can: String, puk: String, newCode: String) async {
+            do {
+                try await cardOperator.unblockPin2(CAN: can, puk: puk, newCode: newCode)
             } catch {
                 // Handle error here
             }

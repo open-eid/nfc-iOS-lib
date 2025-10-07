@@ -28,7 +28,6 @@ for destination in "generic/platform=iOS" "generic/platform=iOS Simulator"; do
     -destination "${destination}" \
     -derivedDataPath "${HOME}/Library/Developer/Xcode/DerivedData/nfclib" \
     SKIP_INSTALL=NO \
-    BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
     OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface"
 done
 

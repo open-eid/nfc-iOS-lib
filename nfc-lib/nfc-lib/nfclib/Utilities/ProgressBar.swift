@@ -1,5 +1,5 @@
 //
-//  Logging.swift
+//  ProgressBar.swift
 //  IdCardLib
 //
 /*
@@ -21,10 +21,20 @@
  *
  */
 
-import Foundation
+struct ProgressBar {
+    private let totalSteps: Int
+    private let currentStep: Int
 
-func print(_ items: Any..., separator: String = " ", terminator: String = "\n") {
-#if DEBUG
-    Swift.print(items, separator: separator, terminator: terminator)
-#endif
+    init(currentStep: Int, totalSteps: Int = 4) {
+        self.currentStep = currentStep
+        self.totalSteps = totalSteps
+    }
+
+    func generate() -> String {
+        if currentStep > 0 {
+            return (0..<totalSteps).map { $0 < currentStep ? "🔵" : "⚪️" }.joined(separator: " ")
+        } else {
+            return ""
+        }
+    }
 }
