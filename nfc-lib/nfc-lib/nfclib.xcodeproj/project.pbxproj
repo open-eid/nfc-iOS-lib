@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1319EBC72B330D1500F69C0E /* Logging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1319EBC62B330D1500F69C0E /* Logging.swift */; };
 		1319EBCB2B33209400F69C0E /* NFCConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1319EBCA2B33209400F69C0E /* NFCConnection.swift */; };
 		133C3AC22B4D95A9006F9DBD /* SwiftECC in Frameworks */ = {isa = PBXBuildFile; productRef = 133C3AC12B4D95A9006F9DBD /* SwiftECC */; settings = {ATTRIBUTES = (Required, ); }; };
 		137957B82B0329890065716E /* nfclib.h in Headers */ = {isa = PBXBuildFile; fileRef = 137957B72B0329890065716E /* nfclib.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -19,6 +18,13 @@
 		139965BA2B18351400D632C8 /* OperationReadPublicData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965B92B18351400D632C8 /* OperationReadPublicData.swift */; };
 		139965BE2B18365F00D632C8 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965BD2B18365F00D632C8 /* Utilities.swift */; };
 		13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */; };
+		1A56CB182EA63A9300D00BFA /* UsbReaderConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */; };
+		1A56CB252EA63B6F00D00BFA /* bR301.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */; };
+		1A56CB262EA63B6F00D00BFA /* bR301.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		1A56CB292EA63C1400D00BFA /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB282EA63C1400D00BFA /* CoreBluetooth.framework */; };
+		1A56CB2B2EA63C1C00D00BFA /* ExternalAccessory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB2A2EA63C1C00D00BFA /* ExternalAccessory.framework */; };
+		1A56CB2D2EA63EBC00D00BFA /* CardReaderiR301.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A56CB2C2EA63EBC00D00BFA /* CardReaderiR301.swift */; };
+		1A56CB2F2EA63FB200D00BFA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB2E2EA63FB200D00BFA /* UIKit.framework */; };
 		5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */; };
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
@@ -36,8 +42,21 @@
 		FAFB85EE2E3CACC5002BCEAC /* OperationUnblockPin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFB85ED2E3CACB7002BCEAC /* OperationUnblockPin.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		1A56CB272EA63B6F00D00BFA /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				1A56CB262EA63B6F00D00BFA /* bR301.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
-		1319EBC62B330D1500F69C0E /* Logging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logging.swift; sourceTree = "<group>"; };
 		1319EBCA2B33209400F69C0E /* NFCConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NFCConnection.swift; sourceTree = "<group>"; };
 		137957B42B0329890065716E /* nfclib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = nfclib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		137957B72B0329890065716E /* nfclib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = nfclib.h; sourceTree = "<group>"; };
@@ -49,6 +68,17 @@
 		139965B92B18351400D632C8 /* OperationReadPublicData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationReadPublicData.swift; sourceTree = "<group>"; };
 		139965BD2B18365F00D632C8 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationSignHash.swift; sourceTree = "<group>"; };
+		1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsbReaderConnection.swift; sourceTree = "<group>"; };
+		1A56CB192EA63AE600D00BFA /* ft301u.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ft301u.h; sourceTree = "<group>"; };
+		1A56CB1A2EA63AE600D00BFA /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
+		1A56CB1B2EA63AE600D00BFA /* ReaderInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReaderInterface.h; sourceTree = "<group>"; };
+		1A56CB1C2EA63AE600D00BFA /* winscard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = winscard.h; sourceTree = "<group>"; };
+		1A56CB1D2EA63AE600D00BFA /* wintypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wintypes.h; sourceTree = "<group>"; };
+		1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = bR301.xcframework; sourceTree = "<group>"; };
+		1A56CB282EA63C1400D00BFA /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/CoreBluetooth.framework; sourceTree = DEVELOPER_DIR; };
+		1A56CB2A2EA63C1C00D00BFA /* ExternalAccessory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExternalAccessory.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/ExternalAccessory.framework; sourceTree = DEVELOPER_DIR; };
+		1A56CB2C2EA63EBC00D00BFA /* CardReaderiR301.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReaderiR301.swift; sourceTree = "<group>"; };
+		1A56CB2E2EA63FB200D00BFA /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEidData.swift; sourceTree = "<group>"; };
 		5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticateWithWebEID.swift; sourceTree = "<group>"; };
 		5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEIDHash.swift; sourceTree = "<group>"; };
@@ -70,7 +100,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1A56CB252EA63B6F00D00BFA /* bR301.xcframework in Frameworks */,
+				1A56CB2F2EA63FB200D00BFA /* UIKit.framework in Frameworks */,
+				1A56CB2B2EA63C1C00D00BFA /* ExternalAccessory.framework in Frameworks */,
 				5EEC1BB92CEBB06C0022D377 /* X509 in Frameworks */,
+				1A56CB292EA63C1400D00BFA /* CoreBluetooth.framework in Frameworks */,
 				133C3AC22B4D95A9006F9DBD /* SwiftECC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -86,6 +120,7 @@
 				139965B92B18351400D632C8 /* OperationReadPublicData.swift */,
 				13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */,
 				FAFB85ED2E3CACB7002BCEAC /* OperationUnblockPin.swift */,
+				1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */,
 			);
 			path = Operations;
 			sourceTree = "<group>";
@@ -116,6 +151,7 @@
 				137957B72B0329890065716E /* nfclib.h */,
 				139965B52B182FAA00D632C8 /* Utilities */,
 				139965B42B182F9D00D632C8 /* Extensions */,
+				1A56CB212EA63AE600D00BFA /* bR301 */,
 			);
 			path = nfclib;
 			sourceTree = "<group>";
@@ -136,10 +172,21 @@
 			children = (
 				7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */,
 				139965B22B182F4E00D632C8 /* AES.swift */,
-				1319EBC62B330D1500F69C0E /* Logging.swift */,
 				139965BD2B18365F00D632C8 /* Utilities.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		1A56CB212EA63AE600D00BFA /* bR301 */ = {
+			isa = PBXGroup;
+			children = (
+				1A56CB192EA63AE600D00BFA /* ft301u.h */,
+				1A56CB1A2EA63AE600D00BFA /* module.modulemap */,
+				1A56CB1B2EA63AE600D00BFA /* ReaderInterface.h */,
+				1A56CB1C2EA63AE600D00BFA /* winscard.h */,
+				1A56CB1D2EA63AE600D00BFA /* wintypes.h */,
+			);
+			path = bR301;
 			sourceTree = "<group>";
 		};
 		5A61B2862B285B8500694DA5 /* WebEID */ = {
@@ -155,6 +202,10 @@
 		5A9969822B03B56B002A1060 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1A56CB2E2EA63FB200D00BFA /* UIKit.framework */,
+				1A56CB2A2EA63C1C00D00BFA /* ExternalAccessory.framework */,
+				1A56CB282EA63C1400D00BFA /* CoreBluetooth.framework */,
+				1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -170,6 +221,7 @@
 				FA0F6E3E2E3112DC00E8D99C /* Idemia.swift */,
 				FA0F6E3C2E31049400E8D99C /* CardReaderNFC.swift */,
 				FA0F6E3A2E31044600E8D99C /* CardReader.swift */,
+				1A56CB2C2EA63EBC00D00BFA /* CardReaderiR301.swift */,
 			);
 			path = CardActions;
 			sourceTree = "<group>";
@@ -196,6 +248,7 @@
 				137957B02B0329890065716E /* Sources */,
 				137957B12B0329890065716E /* Frameworks */,
 				137957B22B0329890065716E /* Resources */,
+				1A56CB272EA63B6F00D00BFA /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -265,7 +318,6 @@
 				13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */,
 				5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */,
 				139965BE2B18365F00D632C8 /* Utilities.swift in Sources */,
-				1319EBC72B330D1500F69C0E /* Logging.swift in Sources */,
 				5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */,
 				139965B12B182EF700D632C8 /* TKBERTLVRecord+Extensions.swift in Sources */,
 				FA0F6E3D2E31049400E8D99C /* CardReaderNFC.swift in Sources */,
@@ -278,6 +330,7 @@
 				FAFB85EE2E3CACC5002BCEAC /* OperationUnblockPin.swift in Sources */,
 				1319EBCB2B33209400F69C0E /* NFCConnection.swift in Sources */,
 				7D8E1EE22D01C6CE00F13D71 /* ProgressBar.swift in Sources */,
+				1A56CB182EA63A9300D00BFA /* UsbReaderConnection.swift in Sources */,
 				139965B32B182F4E00D632C8 /* AES.swift in Sources */,
 				5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */,
 				FA0F6E2E2E30EA0400E8D99C /* IDCardError.swift in Sources */,
@@ -285,6 +338,7 @@
 				139965BA2B18351400D632C8 /* OperationReadPublicData.swift in Sources */,
 				FA0F6E3B2E31044600E8D99C /* CardReader.swift in Sources */,
 				FA0F6E392E31041400E8D99C /* CardCommands.swift in Sources */,
+				1A56CB2D2EA63EBC00D00BFA /* CardReaderiR301.swift in Sources */,
 				139965AB2B182C6F00D632C8 /* DataProtocol+Extension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

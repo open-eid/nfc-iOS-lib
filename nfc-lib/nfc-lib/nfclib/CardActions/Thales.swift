@@ -1,3 +1,7 @@
+//
+//  Thales.swift
+//  IdCardLib
+//
 /*
  * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
  *
@@ -39,6 +43,13 @@ class Thales: CardCommandsInternal {
     let canChangePUK: Bool = false
     let reader: CardReader
     let fillChar: UInt8 = 0x00
+
+    init?(reader: any CardReader, atr: Bytes) throws {
+        guard atr == Thales.ATR else {
+            return nil
+        }
+        self.reader = reader
+    }
 
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == Thales.kAIDGlobal else {

@@ -1,3 +1,7 @@
+//
+//  CardCommands.swift
+//  IdCardLib
+//
 /*
  * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
  *
@@ -29,7 +33,7 @@ public enum CodeType: UInt {
  * A protocol defining commands for interacting with a smart card.
  */
 @MainActor
-public protocol CardCommands: AnyObject {
+public protocol CardCommands: Sendable {
     var canChangePUK: Bool { get }
     /**
      * Reads public data from the card.

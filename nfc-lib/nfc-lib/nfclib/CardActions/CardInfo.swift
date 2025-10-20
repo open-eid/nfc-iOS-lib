@@ -1,3 +1,7 @@
+//
+//  CardInfo.swift
+//  IdCardLib
+//
 /*
  * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
  *
@@ -48,7 +52,7 @@ public struct CardInfo: Sendable {
     }
 }
 
-public enum CardField: Int {
+public enum CardField: Int, Sendable {
     case surname = 1,
          firstName,
          sex,
