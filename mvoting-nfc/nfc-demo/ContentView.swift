@@ -204,20 +204,15 @@ struct ContentView: View {
         text: Binding<SecureData>,
         useSecureField: Bool = true
     ) -> some View {
-        // Bridge SecureData <-> String for SwiftUI
         let bridge = Binding<String>(
             get: {
-                // Don’t echo the real value back into the field (safer).
                 ""
             },
             set: { newValue in
-                // Convert typed characters to bytes (UTF-8 digits)
                 let bytes = Array(newValue.utf8)
                 let newSecure = SecureData(bytes)
-                // Wipe the previous value before replacing
                 text.wrappedValue.secureZero()
                 text.wrappedValue = newSecure
-                // Optionally: zero a temporary Data if you used one (not needed here)
             }
         )
 
@@ -232,7 +227,7 @@ struct ContentView: View {
             }
             .textFieldStyle(.roundedBorder)
             .keyboardType(.numberPad)
-            .textContentType(.oneTimeCode) // avoids iCloud Keychain suggestions
+            .textContentType(.oneTimeCode)
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
             .padding(.vertical, 4)
