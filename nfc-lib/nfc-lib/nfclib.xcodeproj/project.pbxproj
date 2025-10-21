@@ -25,6 +25,7 @@
 		1A56CB2B2EA63C1C00D00BFA /* ExternalAccessory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB2A2EA63C1C00D00BFA /* ExternalAccessory.framework */; };
 		1A56CB2D2EA63EBC00D00BFA /* CardReaderiR301.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A56CB2C2EA63EBC00D00BFA /* CardReaderiR301.swift */; };
 		1A56CB2F2EA63FB200D00BFA /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB2E2EA63FB200D00BFA /* UIKit.framework */; };
+		1A56CB312EA7BB0500D00BFA /* SecureData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A56CB302EA7BB0500D00BFA /* SecureData.swift */; };
 		5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */; };
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
@@ -79,6 +80,7 @@
 		1A56CB2A2EA63C1C00D00BFA /* ExternalAccessory.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExternalAccessory.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/Library/Frameworks/ExternalAccessory.framework; sourceTree = DEVELOPER_DIR; };
 		1A56CB2C2EA63EBC00D00BFA /* CardReaderiR301.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardReaderiR301.swift; sourceTree = "<group>"; };
 		1A56CB2E2EA63FB200D00BFA /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk/System/iOSSupport/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		1A56CB302EA7BB0500D00BFA /* SecureData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureData.swift; sourceTree = "<group>"; };
 		5A2CA6632B2C53AD00A0EA34 /* WebEidData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEidData.swift; sourceTree = "<group>"; };
 		5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationAuthenticateWithWebEID.swift; sourceTree = "<group>"; };
 		5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEIDHash.swift; sourceTree = "<group>"; };
@@ -173,6 +175,7 @@
 				7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */,
 				139965B22B182F4E00D632C8 /* AES.swift */,
 				139965BD2B18365F00D632C8 /* Utilities.swift */,
+				1A56CB302EA7BB0500D00BFA /* SecureData.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -317,6 +320,7 @@
 			files = (
 				13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */,
 				5A2CA6642B2C53AD00A0EA34 /* WebEidData.swift in Sources */,
+				1A56CB312EA7BB0500D00BFA /* SecureData.swift in Sources */,
 				139965BE2B18365F00D632C8 /* Utilities.swift in Sources */,
 				5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */,
 				139965B12B182EF700D632C8 /* TKBERTLVRecord+Extensions.swift in Sources */,

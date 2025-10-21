@@ -36,13 +36,13 @@ public class OperationUnblockPin: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
     private var codeType: CodeType?
-    private var puk: String?
-    private var newPin: String?
+    private var puk: SecureData?
+    private var newPin: SecureData?
     private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<Void, Error>?
 
-    public func startReading(CAN: String, codeType: CodeType, puk: String, newPin: String) async throws {
+    public func startReading(CAN: String, codeType: CodeType, puk: SecureData, newPin: SecureData) async throws {
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation

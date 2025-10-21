@@ -72,7 +72,7 @@ extension Operator: CardOperations {
         }
     }
 
-    public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData {
+    public func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData {
         do {
             let webEidData = try await OperationAuthenticateWithWebEID(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin).startReading()
             return webEidData
@@ -84,7 +84,7 @@ extension Operator: CardOperations {
         }
     }
     
-    public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data {
+    public func sign(CAN: String, hash: Data, pin2: SecureData) async throws -> Data {
         do {
             let signature = try await OperationSignHash().startSigning(CAN: CAN, PIN2: pin2, hash: hash)
             return signature
@@ -96,7 +96,7 @@ extension Operator: CardOperations {
         }
     }
 
-    public func unblockPin1(CAN: String, puk: String, newCode: String) async throws {
+    public func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData) async throws {
         do {
             try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode)
         } catch {
@@ -107,7 +107,7 @@ extension Operator: CardOperations {
         }
     }
 
-    public func unblockPin2(CAN: String, puk: String, newCode: String) async throws {
+    public func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData) async throws {
         do {
             try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode)
         } catch {
