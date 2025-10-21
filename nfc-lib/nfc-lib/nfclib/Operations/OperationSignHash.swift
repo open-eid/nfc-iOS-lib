@@ -29,13 +29,13 @@ import CryptoKit
 public class OperationSignHash: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
-    private var PIN: String = ""
+    private var PIN: SecureData = SecureData([0x00])
     private var hashToSign: Data?
     private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
     private var continuation: CheckedContinuation<Data, Error>?
     private var connection = NFCConnection()
 
-    public func startSigning(CAN: String, PIN2: String, hash: Data) async throws -> Data {
+    public func startSigning(CAN: String, PIN2: SecureData, hash: Data) async throws -> Data {
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation

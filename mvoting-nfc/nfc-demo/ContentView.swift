@@ -32,9 +32,9 @@ struct ContentView: View {
     @State private var origin: String = "https://valimised.ee"
     @State private var dataToSign: String = "JÕEORG"
     @State private var can: String = ""
-    @State private var pin1: String = ""
-    @State private var pin2: String = ""
-    @State private var puk: String = ""
+    @State private var pin1: SecureData = SecureData([0x00])
+    @State private var pin2: SecureData = SecureData([0x00])
+    @State private var puk: SecureData = SecureData([0x00])
     @State private var selectedMethod: HashMethod = .sha254
     let methods = HashMethod.allCases
 
@@ -198,7 +198,48 @@ struct ContentView: View {
                 .padding()
         }
     }
+    
+    private func codeTextField(
+        placeholder: String,
+        text: Binding<SecureData>,
+        useSecureField: Bool = true
+    ) -> some View {
+        // Bridge SecureData <-> String for SwiftUI
+        let bridge = Binding<String>(
+            get: {
+                // Don’t echo the real value back into the field (safer).
+                ""
+            },
+            set: { newValue in
+                // Convert typed characters to bytes (UTF-8 digits)
+                let bytes = Array(newValue.utf8)
+                let newSecure = SecureData(bytes)
+                // Wipe the previous value before replacing
+                text.wrappedValue.secureZero()
+                text.wrappedValue = newSecure
+                // Optionally: zero a temporary Data if you used one (not needed here)
+            }
+        )
+
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("\(placeholder):")
+            Group {
+                if useSecureField {
+                    SecureField(placeholder, text: bridge)
+                } else {
+                    TextField(placeholder, text: bridge)
+                }
+            }
+            .textFieldStyle(.roundedBorder)
+            .keyboardType(.numberPad)
+            .textContentType(.oneTimeCode) // avoids iCloud Keychain suggestions
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .padding(.vertical, 4)
+        }
+    }
 }
+
 
 extension ContentView {
 
@@ -262,7 +303,7 @@ extension ContentView {
             }
         }
 
-        func sign(can: String, pin2: String) async {
+        func sign(can: String, pin2: SecureData) async {
             guard let data = hashedData else { return }
             do {
                 let signResult = try await cardOperator.sign(CAN: can, hash: data, pin2: pin2)
@@ -273,7 +314,7 @@ extension ContentView {
             }
         }
 
-        func authenticate(can: String, pin1: String, challenge: String, origin: String) async {
+        func authenticate(can: String, pin1: SecureData, challenge: String, origin: String) async {
             do {
                 let webEidResult = try await cardOperator.loadWebEIDAuthenticationData(CAN: can, pin1: pin1, challenge: challenge, origin: origin)
                 self.webEidData = webEidResult
@@ -282,7 +323,7 @@ extension ContentView {
             }
         }
 
-        func unblockPin1(can: String, puk: String, newCode: String) async {
+        func unblockPin1(can: String, puk: SecureData, newCode: SecureData) async {
             do {
                 try await cardOperator.unblockPin1(CAN: can, puk: puk, newCode: newCode)
             } catch {
@@ -290,7 +331,7 @@ extension ContentView {
             }
         }
 
-        func unblockPin2(can: String, puk: String, newCode: String) async {
+        func unblockPin2(can: String, puk: SecureData, newCode: SecureData) async {
             do {
                 try await cardOperator.unblockPin2(CAN: can, puk: puk, newCode: newCode)
             } catch {

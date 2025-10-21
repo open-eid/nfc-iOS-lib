@@ -61,7 +61,7 @@ public protocol CardOperations {
     ///   - origin: A `String` representing the origin of the authentication request.
     /// - Returns: A `WebEidData` object containing the result of the authentication.
     /// - Throws: An error if the authentication fails.
-    func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData
+    func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData
 
     /// Performs a signing operation using the provided hash and PIN.
     ///
@@ -71,7 +71,7 @@ public protocol CardOperations {
     ///   - pin2: A `String` representing the second PIN.
     /// - Returns: A `Data` object containing the signature.
     /// - Throws: An error if the signing operation fails.
-    func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+    func sign(CAN: String, hash: Data, pin2: SecureData) async throws -> Data
 
     /// Unblocks a PIN1 using the PUK code.
     ///
@@ -80,7 +80,7 @@ public protocol CardOperations {
     ///   - puk: The current PUK code for verification.
     ///   - newCode: The new PIN code.
     /// - Throws: An error if the operation fails.
-    func unblockPin1(CAN: String, puk: String, newCode: String) async throws
+    func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData) async throws
 
     /// Unblocks a PIN2 using the PUK code.
     ///
@@ -89,5 +89,5 @@ public protocol CardOperations {
     ///   - puk: The current PUK code for verification.
     ///   - newCode: The new PIN code.
     /// - Throws: An error if the operation fails.
-    func unblockPin2(CAN: String, puk: String, newCode: String) async throws
+    func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData) async throws
 }
