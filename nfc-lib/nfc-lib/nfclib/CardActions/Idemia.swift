@@ -49,6 +49,13 @@ class Idemia: CardCommandsInternal {
     let reader: CardReader
     let fillChar: UInt8 = 0xFF
 
+    required init?(reader: CardReader, atr: Bytes) {
+        guard atr == ATR || atr == ATRv2 else {
+            return nil
+        }
+        self.reader = reader
+    }
+
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == kAID else {
             return nil

@@ -1,7 +1,3 @@
-//
-//  NFCISO7816Tag+Extension.swift
-//  IdCardLib
-//
 /*
  * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
  *
@@ -23,9 +19,10 @@
 
 import CoreNFC
 import CryptoTokenKit
+import OSLog
 
 extension NFCISO7816Tag {
-    nonisolated(nonsending)
+
     func sendCommand(
         cls: UInt8,
         ins: UInt8,
@@ -61,7 +58,7 @@ extension NFCISO7816Tag {
             return data
         }
     }
-    nonisolated(nonsending)
+
     func sendCommand(
         cls: UInt8,
         ins: UInt8,
@@ -76,7 +73,6 @@ extension NFCISO7816Tag {
         return try await sendCommand(cls: cls, ins: ins, p1Byte: p1Byte, p2Byte: p2Byte, data: data, leByte: leByte)
     }
 
-    nonisolated(nonsending)
     func sendPaceCommand(records: [TKTLVRecord], tagExpected: TKTLVTag) async throws -> TKBERTLVRecord {
         let request = TKBERTLVRecord(tag: 0x7c, records: records)
         do {
@@ -95,7 +91,8 @@ extension NFCISO7816Tag {
                 throw IdCardInternalError.invalidResponse(message: "response conversion failed")
             }
         } catch let error as IdCardInternalError {
-            print("sendPaceCommand \(error.localizedDescription)")
+            let logger = Logger(subsystem: "ee.ria.digidoc.RIADigiDoc", category: "NFCISO7816Tag")
+            logger.error("sendPaceCommand \(error.localizedDescription)")
             switch error {
             case .sendCommandFailed(message: let message):
                 throw IdCardInternalError.invalidResponse(message: message)
@@ -105,7 +102,6 @@ extension NFCISO7816Tag {
         }
     }
 
-    nonisolated(nonsending)
     private func _sendCommandNonisolated(apdu: NFCISO7816APDU) async throws -> (Data, UInt8, UInt8) {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(Data, UInt8, UInt8), Error>) in
             self.sendCommand(apdu: apdu) { data, sw1, sw2, error in

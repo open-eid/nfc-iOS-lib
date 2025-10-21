@@ -40,6 +40,13 @@ class Thales: CardCommandsInternal {
     let reader: CardReader
     let fillChar: UInt8 = 0x00
 
+    init?(reader: any CardReader, atr: Bytes) throws {
+        guard atr == Thales.ATR else {
+            return nil
+        }
+        self.reader = reader
+    }
+
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == Thales.kAIDGlobal else {
             return nil

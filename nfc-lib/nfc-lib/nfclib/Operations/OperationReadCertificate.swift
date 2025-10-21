@@ -72,7 +72,7 @@ public class OperationReadCertificate: NSObject {
 }
 
 extension OperationReadCertificate: NFCTagReaderSessionDelegate {
-    nonisolated public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task { @MainActor in
             defer {
                 self.session = nil
@@ -111,9 +111,9 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
         }
     }
 
-    nonisolated public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
+    public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    nonisolated public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
+    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
         Task { @MainActor in
             self.session = nil
         }
