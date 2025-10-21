@@ -1,7 +1,3 @@
-//
-//  WebEidData.swift
-//  IdCardLib
-//
 /*
  * Copyright 2017 - 2025 Riigi Infosüsteemi Amet
  *

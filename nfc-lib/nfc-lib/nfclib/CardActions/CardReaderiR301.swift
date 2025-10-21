@@ -1,7 +1,3 @@
-//
-//  CardReaderIR301.swift
-//  MoppLib
-//
 /*
  * Copyright 2017 - 2024 Riigi Infosüsteemi Amet
  *
