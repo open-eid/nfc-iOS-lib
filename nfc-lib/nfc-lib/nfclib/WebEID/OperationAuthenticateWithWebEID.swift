@@ -38,7 +38,7 @@ public enum AuthenticateWithWebEidError: Error {
 @MainActor
 public class OperationAuthenticateWithWebEID: NSObject {
     private let CAN: String
-    private let pin1: String
+    private let pin1: SecureData
     private let challenge: String
     private let origin: String
     private let connection = NFCConnection()
@@ -46,7 +46,7 @@ public class OperationAuthenticateWithWebEID: NSObject {
     private var session: NFCTagReaderSession?
     private var continuation: CheckedContinuation<WebEidData, Error>?
 
-    public init(CAN: String, pin1: String, challenge: String, origin: String) {
+    public init(CAN: String, pin1: SecureData, challenge: String, origin: String) {
         self.CAN = CAN
         self.pin1 = pin1
         self.challenge = challenge

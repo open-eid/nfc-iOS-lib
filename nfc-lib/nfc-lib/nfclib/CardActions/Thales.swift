@@ -98,7 +98,7 @@ class Thales: CardCommandsInternal {
         return 0
     }
 
-    func changeCode(_ type: CodeType, to code: String, verifyCode: String) async throws {
+    func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
         guard type != .puk else {
             throw IdCardInternalError.notSupportedCodeType
         }
@@ -106,11 +106,11 @@ class Thales: CardCommandsInternal {
         try await changeCode(type.pinRef, to: code, verifyCode: verifyCode)
     }
 
-    func verifyCode(_ type: CodeType, code: String) async throws {
+    func verifyCode(_ type: CodeType, code: SecureData) async throws {
         try await verifyCode(type.pinRef, code: code)
     }
 
-    func unblockCode(_ type: CodeType, puk: String, newCode: String) async throws {
+    func unblockCode(_ type: CodeType, puk: SecureData, newCode: SecureData) async throws {
         guard type != .puk else {
             throw IdCardInternalError.notSupportedCodeType
         }
@@ -119,7 +119,7 @@ class Thales: CardCommandsInternal {
 
     // MARK: - Authentication & Signing
 
-    private func sign(type: CodeType, pin: String, keyRef: UInt8, hash: Data) async throws -> Data {
+    private func sign(type: CodeType, pin: SecureData, keyRef: UInt8, hash: Data) async throws -> Data {
         try await verifyCode(type, code: pin)
         try await setSecEnv(mode: 0xB6, algo: [0x24 + UInt8(hash.count)], keyRef: keyRef)
         _ = try await reader
@@ -137,17 +137,17 @@ class Thales: CardCommandsInternal {
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, leByte: 0x00)
     }
 
-    func authenticate(for hash: Data, withPin1 pin1: String) async throws -> Data {
+    func authenticate(for hash: Data, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: Thales.kAID)
         return try await sign(type: .pin1, pin: pin1, keyRef: Thales.AUTHKEY, hash: hash)
     }
 
-    func calculateSignature(for hash: Data, withPin2 pin2: String) async throws -> Data {
+    func calculateSignature(for hash: Data, withPin2 pin2: SecureData) async throws -> Data {
         _ = try await select(file: Thales.kAID)
         return try await sign(type: .pin2, pin: pin2, keyRef: Thales.SIGNKEY, hash: hash)
     }
 
-    func decryptData(_ hash: Data, withPin1 pin1: String) async throws -> Data {
+    func decryptData(_ hash: Data, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: Thales.kAID)
         try await verifyCode(.pin1, code: pin1)
         try await setSecEnv(mode: 0xB8, keyRef: Thales.AUTHKEY)
