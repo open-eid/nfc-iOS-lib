@@ -47,8 +47,7 @@ public class OperationReadCertificate: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
     private var certUsage: CertificateUsage!
-    // TODO: Use a proper message that is localised
-    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
+    private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<SecCertificate, Error>?
 
@@ -80,11 +79,11 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
 
             guard let certUsage else {
                 continuation?.resume(throwing: ReadCertificateError.certificateUsageNotSpecified)
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                session.invalidate(errorMessage: "Failed to read data")
                 return
             }
             do {
-                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await connection.setup(session, tags: tags)
                 let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
                 do {
@@ -98,14 +97,14 @@ extension OperationReadCertificate: NFCTagReaderSessionDelegate {
                         let x509Certificate = try convertBytesToX509Certificate(cert)
                         continuation?.resume(with: .success(x509Certificate))
                     }
-                    session.alertMessage = "Andmed loetud"
+                    session.alertMessage = "Data read"
                     session.invalidate()
                 } catch {
-                    session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                    session.invalidate(errorMessage: "Failed to read data")
                     continuation?.resume(throwing: ReadCertificateError.failedToReadCertificate)
                 }
             } catch {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                session.invalidate(errorMessage: "Failed to read data")
                 continuation?.resume(throwing: error)
             }
         }
