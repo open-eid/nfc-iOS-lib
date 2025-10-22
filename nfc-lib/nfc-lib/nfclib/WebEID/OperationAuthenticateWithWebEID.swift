@@ -57,12 +57,10 @@ public class OperationAuthenticateWithWebEID: NSObject {
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             guard NFCTagReaderSession.readingAvailable else {
-                // TODO: Handle this case properly
                 continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
                 return
             }
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
-            // TODO: Use a proper message that is localised
             updateAlertMessage(step: 0)
             session?.begin()
         }
@@ -70,10 +68,10 @@ public class OperationAuthenticateWithWebEID: NSObject {
 
     private func updateAlertMessage(step: Int) {
         let stepMessages = [
-            "Palun asetage oma ID-kaart vastu nutiseadet.",
-            "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse.",
-            "Andmete lugemine käib, palun oodake.",
-            "Autentimine käib, palun oodake."
+            "Please place your ID card against the smart device",
+            "Hold your ID card against your smart device until the data is read",
+            "Reading data please wait",
+            "Authentication in progress please wait"
         ]
 
         let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
@@ -112,30 +110,28 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                 let notBefore = certificate.notValidBefore
 
                 guard Date() >= notBefore else {
-                    let errorMessage = "Sertifikaat pole veel kehtiv"
+                    let errorMessage = "Certificate not yet valid"
                     session.invalidate(errorMessage: errorMessage)
                     continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateNotYetValid)
                     return
                 }
 
                 guard Date() <= notAfter else {
-                    let errorMessage = "Sertifikaat on aegunud"
+                    let errorMessage = "Certificate has expired"
                     session.invalidate(errorMessage: errorMessage)
                     continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateExpired)
                     return
                 }
 
                 guard let publicKey = SecCertificateCopyKey(authCertificate) else {
-                    // TODO: Failed to process public key, handle error
-                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    let errorMessage = "Failed to read data"
                     session.invalidate(errorMessage: errorMessage)
                     continuation?.resume(throwing: AuthenticateWithWebEidError.failedToReadPublicKey)
                     return
                 }
 
                 guard let keyAlgorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
-                    // TODO: Implement error handling
-                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    let errorMessage = "Failed to read data"
                     session.invalidate(errorMessage: errorMessage)
                     continuation?.resume(throwing: AuthenticateWithWebEidError.failedToDetermineAlgorithm)
                     return
@@ -148,7 +144,7 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                       let challengeHash = sha(hashLength: hashLength, data: challengeData),
                       let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
                 else {
-                    let errorMessage = "Andmete lugemine ebaõnnestus"
+                    let errorMessage = "Failed to read data"
                     session.invalidate(errorMessage: errorMessage)
                     continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
                     return
@@ -165,10 +161,10 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                     signingCertificate: signingCertificateBytes.base64EncodedString()
                 )
                 continuation?.resume(returning: webEidData)
-                session.alertMessage = "Andmed loetud"
+                session.alertMessage = "Data read"
                 session.invalidate()
             } catch {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                session.invalidate(errorMessage: "Failed to read data")
                 continuation?.resume(throwing: error)
             }
         }

@@ -27,8 +27,7 @@ import BigInt
 @MainActor final public class OperationReadPublicData: NSObject {
     private var session: NFCTagReaderSession?
     private var CAN: String = ""
-    // TODO: Use a proper message that is localised
-    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
+    private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<CardInfo, Error>?
 
@@ -53,16 +52,16 @@ extension OperationReadPublicData: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task {
             do {
-                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await connection.setup(session, tags: tags)
                 let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
                 let cardInfo = try await cardCommands.readPublicData()
 
                 continuation?.resume(with: .success(cardInfo))
-                session.alertMessage = "Andmed loetud"
+                session.alertMessage = "Data read"
                 session.invalidate()
             } catch {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                session.invalidate(errorMessage: "Failed to read data")
                 continuation?.resume(throwing: error)
             }
         }

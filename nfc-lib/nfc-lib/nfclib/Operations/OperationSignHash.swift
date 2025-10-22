@@ -31,7 +31,7 @@ public class OperationSignHash: NSObject {
     private var CAN: String = ""
     private var PIN: SecureData = SecureData([0x00])
     private var hashToSign: Data?
-    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
+    private let nfcMessage: String = "Please place your ID card against the smart device"
     private var continuation: CheckedContinuation<Data, Error>?
     private var connection = NFCConnection()
 
@@ -56,10 +56,10 @@ public class OperationSignHash: NSObject {
 
     private func updateAlertMessage(step: Int) {
         let stepMessages = [
-            "Palun asetage oma ID-kaart vastu nutiseadet.",
-            "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse.",
-            "Andmete lugemine käib, palun oodake.",
-            "Signeerimine käib, palun oodake."
+            "Please place your ID card against the smart device",
+            "Hold your ID card against your smart device until the data is read",
+            "Reading data please wait",
+            "Signing in progress please wait"
         ]
 
         let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
@@ -85,10 +85,10 @@ extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
                 updateAlertMessage(step: 3)
                 let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: PIN)
                 continuation?.resume(with: .success(signatureValue))
-                session.alertMessage = "Andmed loetud"
+                session.alertMessage = "Data read"
                 session.invalidate()
             } catch {
-                session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+                session.invalidate(errorMessage: "Failed to read data")
                 continuation?.resume(throwing: error)
             }
         }

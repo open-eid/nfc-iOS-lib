@@ -26,24 +26,24 @@ import CryptoTokenKit
 public class NFCConnection {
     func setup(_ session: NFCTagReaderSession, tags: [NFCTag]) async throws -> NFCISO7816Tag {
         if tags.count > 1 {
-            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+            session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.multipleTagsDetected
         }
 
         guard let firstTag = tags.first else {
-            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+            session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.invalidTag
         }
 
         do {
             try await session.connect(to: firstTag)
         } catch {
-            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+            session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.connectionFailed
         }
 
         guard case let .iso7816(tag) = firstTag else {
-            session.invalidate(errorMessage: "Andmete lugemine ebaõnnestus")
+            session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.invalidTag
         }
 

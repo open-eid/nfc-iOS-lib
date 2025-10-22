@@ -38,7 +38,7 @@ public class OperationUnblockPin: NSObject {
     private var codeType: CodeType?
     private var puk: SecureData?
     private var newPin: SecureData?
-    private let nfcMessage: String = "Palun asetage oma ID-kaart vastu nutiseadet."
+    private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<Void, Error>?
 
@@ -73,11 +73,11 @@ extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
 
             guard let codeType = self.codeType, let puk = self.puk, let newPin = self.newPin else {
                 self.continuation?.resume(throwing: UnblockPINError.missingRequiredParameter)
-                session.invalidate(errorMessage: "PINi vahetamine ebaõnnestus")
+                session.invalidate(errorMessage: "PIN change failed")
                 return
             }
             do {
-                session.alertMessage = "Hoidke ID-kaarti vastu nutiseadet kuni andmeid loetakse."
+                session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await self.connection.setup(session, tags: tags)
                 let cardCommands = try await self.connection.getCardCommands(session, tag: tag, CAN: self.CAN)
                 do {
@@ -87,10 +87,10 @@ extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
                 }
 
                 self.continuation?.resume(with: .success(()))
-                session.alertMessage = "PIN vahetatud"
+                session.alertMessage = "PIN changed"
                 session.invalidate()
             } catch {
-                session.invalidate(errorMessage: "PINi vahetamine ebaõnnestus")
+                session.invalidate(errorMessage: "PIN change failed")
                 self.continuation?.resume(throwing: error)
             }
         }
