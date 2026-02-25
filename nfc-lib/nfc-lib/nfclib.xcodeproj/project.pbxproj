@@ -18,7 +18,6 @@
 		139965BA2B18351400D632C8 /* OperationReadPublicData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965B92B18351400D632C8 /* OperationReadPublicData.swift */; };
 		139965BE2B18365F00D632C8 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139965BD2B18365F00D632C8 /* Utilities.swift */; };
 		13B8B8532B1D0D5D0017AA26 /* OperationSignHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */; };
-		1A0437F92F4F292000F9F930 /* UsbReaderConnectionProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0437F82F4F292000F9F930 /* UsbReaderConnectionProtocol.swift */; };
 		1A56CB182EA63A9300D00BFA /* UsbReaderConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */; };
 		1A56CB252EA63B6F00D00BFA /* bR301.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */; };
 		1A56CB262EA63B6F00D00BFA /* bR301.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1A56CB1F2EA63AE600D00BFA /* bR301.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -70,7 +69,6 @@
 		139965B92B18351400D632C8 /* OperationReadPublicData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationReadPublicData.swift; sourceTree = "<group>"; };
 		139965BD2B18365F00D632C8 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationSignHash.swift; sourceTree = "<group>"; };
-		1A0437F82F4F292000F9F930 /* UsbReaderConnectionProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsbReaderConnectionProtocol.swift; sourceTree = "<group>"; };
 		1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsbReaderConnection.swift; sourceTree = "<group>"; };
 		1A56CB192EA63AE600D00BFA /* ft301u.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ft301u.h; sourceTree = "<group>"; };
 		1A56CB1A2EA63AE600D00BFA /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; path = module.modulemap; sourceTree = "<group>"; };
@@ -124,7 +122,6 @@
 			isa = PBXGroup;
 			children = (
 				1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */,
-				1A0437F82F4F292000F9F930 /* UsbReaderConnectionProtocol.swift */,
 				1319EBCA2B33209400F69C0E /* NFCConnection.swift */,
 				5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */,
 				139965B92B18351400D632C8 /* OperationReadPublicData.swift */,
@@ -334,7 +331,6 @@
 				1A56CB312EA7BB0500D00BFA /* SecureData.swift in Sources */,
 				139965BE2B18365F00D632C8 /* Utilities.swift in Sources */,
 				5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */,
-				1A0437F92F4F292000F9F930 /* UsbReaderConnectionProtocol.swift in Sources */,
 				139965B12B182EF700D632C8 /* TKBERTLVRecord+Extensions.swift in Sources */,
 				FA0F6E3D2E31049400E8D99C /* CardReaderNFC.swift in Sources */,
 				FA0F6E3F2E3112DC00E8D99C /* Idemia.swift in Sources */,
