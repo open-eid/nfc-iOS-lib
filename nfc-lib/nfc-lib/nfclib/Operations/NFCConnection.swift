@@ -24,7 +24,8 @@ import CryptoTokenKit
 
 @MainActor
 public class NFCConnection {
-    func setup(_ session: NFCTagReaderSession, tags: [NFCTag]) async throws -> NFCISO7816Tag {
+    public init() {}
+    public func setup(_ session: NFCTagReaderSession, tags: [NFCTag]) async throws -> NFCISO7816Tag {
         if tags.count > 1 {
             session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.multipleTagsDetected
@@ -51,7 +52,7 @@ public class NFCConnection {
     }
 
     @MainActor
-    func getCardCommands(_: NFCTagReaderSession, tag: NFCISO7816Tag, CAN: String) async throws -> CardCommands {
+    public func getCardCommands(_: NFCTagReaderSession, tag: NFCISO7816Tag, CAN: String) async throws -> CardCommands {
         let initialSelectedAID = tag.initialSelectedAID
         let reader = try await CardReaderNFC(tag, CAN: CAN)
         guard let aid = Bytes(hex: initialSelectedAID) else {

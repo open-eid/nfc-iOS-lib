@@ -20,8 +20,8 @@
 import iR301
 import OSLog
 
-class CardReaderiR301: CardReader {
-    private static let logger = Logger(subsystem: "ee.ria.digidoc.RIADigiDoc", category: "CardReaderiR301")
+class CardReaderiR301: CardReader, @unchecked Sendable {
+    private static let logger = Logger(subsystem: "ee.ria.nfc-iOS-lib", category: "CardReaderiR301")
 
     let atr: Bytes
     private var cardHandle: SCARDHANDLE = 0
@@ -124,7 +124,8 @@ class CardReaderiR301: CardReader {
             initializedCount = Int(responseSize)
         }
         guard response.count >= 2 else {
-            CardReaderiR301.logger.error("ID-CARD: Response size must be at least 2. Response size: \(response.count)")
+            CardReaderiR301.logger.error(
+                "ID-CARD: Response size must be at least 2. Response size: \(response.count)")
             throw IdCardInternalError.readerProcessFailed
         }
         CardReaderiR301.logger.debug("ID-CARD Response: \(response.hex)")
