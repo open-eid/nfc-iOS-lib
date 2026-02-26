@@ -19,11 +19,11 @@
 
 import Foundation
 
-public enum UsbReaderStatus: Sendable, Equatable {
+public enum UsbReaderStatus: Sendable {
     case sInitial
     case sReaderNotConnected
     case sReaderRestarted
     case sReaderConnected
-    case sCardConnected
+    case sCardConnected(CardCommands)
     case sReaderProcessFailed
 }

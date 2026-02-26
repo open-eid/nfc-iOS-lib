@@ -74,18 +74,6 @@ public actor UsbReaderConnection {
         return handle
     }
 
-    public func getCardHandler() throws -> CardCommands {
-        guard let cardCommands = self.cardHandler else {
-            throw IdCardInternalError.connectionFailed
-        }
-
-        return cardCommands
-    }
-
-    public func setCardHandler(_ handler: CardCommands?) {
-        self.cardHandler = handler
-    }
-
     public func statusStream() -> AsyncStream<UsbReaderStatus> {
         AsyncStream { continuation in
             self.continuation = continuation
@@ -147,17 +135,14 @@ private final class UsbReaderInterfaceHandler: NSObject, ReaderInterfaceDelegate
                     }
                 } catch {
                     UsbReaderInterfaceHandler.logger.error("ID-CARD: Unable to connect card. \(error)")
-                    await usbReaderConnection.setCardHandler(nil)
                     await usbReaderConnection.updateStatus(.sReaderProcessFailed)
                     return
                 }
 
                 if let handler {
-                    await usbReaderConnection.setCardHandler(handler)
-
                     UsbReaderInterfaceHandler.logger.info("ID-CARD: Card connected")
 
-                    await usbReaderConnection.updateStatus(.sCardConnected)
+                    await usbReaderConnection.updateStatus(.sCardConnected(handler))
                 }
             } catch {
                 UsbReaderInterfaceHandler.logger.error("ID-CARD: Unable to power on card")
