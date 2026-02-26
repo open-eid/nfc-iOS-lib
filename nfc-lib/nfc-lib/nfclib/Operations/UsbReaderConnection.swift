@@ -21,7 +21,7 @@ import OSLog
 import Foundation
 import iR301
 
-public actor UsbReaderConnection: UsbReaderConnectionProtocol {
+public actor UsbReaderConnection {
     private static let logger = Logger(subsystem: "ee.ria.nfc-iOS-lib", category: "UsbReaderConnection")
     private var handle: SCARDCONTEXT = 0
     private var handler: UsbReaderInterfaceHandler?
@@ -260,10 +260,10 @@ private final class UsbReaderInterfaceHandler: NSObject, ReaderInterfaceDelegate
     @MainActor
     private let readerInterface = ReaderInterface()
 
-    private let usbReaderConnection: UsbReaderConnectionProtocol
+    private let usbReaderConnection: UsbReaderConnection
 
     init(
-        usbReaderConnection: UsbReaderConnectionProtocol
+        usbReaderConnection: UsbReaderConnection
     ) {
         self.usbReaderConnection = usbReaderConnection
         super.init()
