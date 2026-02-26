@@ -54,6 +54,17 @@ class Thales: CardCommandsInternal {
         self.reader = reader
     }
 
+    required init?(reader: CardReader, selectAID: Bool) async {
+        self.reader = reader
+        if (selectAID) {
+            do {
+                _ = try await select(file: Thales.kAID)
+            } catch {
+                return nil
+            }
+        }
+    }
+    
     // MARK: - Public Data
 
     func readPublicData() async throws -> CardInfo {

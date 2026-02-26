@@ -57,15 +57,25 @@ public class NFCConnection {
         guard let aid = Bytes(hex: initialSelectedAID) else {
             throw IdCardInternalError.connectionFailed
         }
-        guard let cardCommands: CardCommands = Idemia(
-            reader: reader,
-            aid: aid
-        ) ?? Thales(
-            reader: reader,
-            aid: aid
-        ) else {
-            throw IdCardInternalError.cardNotSupported
+
+        // Try Idemia with explicit AID
+        if let cmd = Idemia(reader: reader, aid: aid) {
+            return cmd
         }
-        return cardCommands
+        // Try Thales with explicit AID
+        if let cmd = Thales(reader: reader, aid: aid) {
+            return cmd
+        }
+        // Try Idemia selecting AID
+        if let cmd = await Idemia(reader: reader, selectAID: true) {
+            return cmd
+        }
+        // Try Thales selecting AID
+        if let cmd = await Thales(reader: reader, selectAID: true) {
+            return cmd
+        }
+
+        throw IdCardInternalError.cardNotSupported
     }
 }
+
