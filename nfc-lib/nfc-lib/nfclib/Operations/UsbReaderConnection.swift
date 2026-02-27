@@ -70,7 +70,7 @@ public actor UsbReaderConnection {
         continuation?.yield(status)
     }
 
-    public func getHandle() async -> SCARDCONTEXT {
+    fileprivate func getHandle() async -> SCARDCONTEXT {
         return handle
     }
 
