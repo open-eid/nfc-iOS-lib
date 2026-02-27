@@ -70,7 +70,7 @@ public class OperationReadCertificate: NSObject {
     }
 }
 
-extension OperationReadCertificate: NFCTagReaderSessionDelegate {
+extension OperationReadCertificate: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task { @MainActor in
             defer {

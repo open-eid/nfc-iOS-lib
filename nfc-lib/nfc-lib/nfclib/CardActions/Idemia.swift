@@ -44,7 +44,7 @@ extension CodeType {
     }
 }
 
-class Idemia: CardCommandsInternal {
+final class Idemia: CardCommandsInternal {
     let canChangePUK: Bool = true
     let reader: CardReader
     let fillChar: UInt8 = 0xFF
@@ -88,7 +88,8 @@ class Idemia: CardCommandsInternal {
             case 2: personalData.givenName = record
             case 4: personalData.citizenship = !record.isEmpty ? record : "-"
             case 6: personalData.personalCode = record
-            case 8: personalData.dateOfExpiry = record.replacingOccurrences(of: " ", with: ".")
+            case 7: personalData.documentNumber = record
+            case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
             default: break
             }
         }
@@ -107,19 +108,20 @@ class Idemia: CardCommandsInternal {
 
     // MARK: - PIN & PUK Management
 
-    func readCodeTryCounterRecord(_ type: CodeType) async throws -> UInt8 {
+    func readCodeTryCounterRecord(_ type: CodeType) async throws -> (retryCount: UInt8, pinActive: Bool) {
         _ = try await select(file: type.aid)
         let ref = type.pinRef & ~0x80
         let data = try await reader.sendAPDU(ins: 0xCB, p1Byte: 0x3F, p2Byte: 0xFF, data:
             [0x4D, 0x08, 0x70, 0x06, 0xBF, 0x81, ref, 0x02, 0xA0, 0x80], leByte: 0x00)
         if let info = TLV(from: data), info.tag == 0x70,
            let tag = TLV(from: info.value), tag.tag == 0xBF8100 | UInt32(ref),
-           let a0value = TLV(from: tag.value), a0value.tag == 0xA0 {
-            for record in TLV.sequenceOfRecords(from: a0value.value) ?? [] where record.tag == 0x9B {
-                return record.value[0]
+           let a0Value = TLV(from: tag.value), a0Value.tag == 0xA0,
+           let records = TLV.sequenceOfRecords(from: a0Value.value) {
+            for record in records where record.tag == 0x9B {
+                return (record.value[0], true)
             }
         }
-        return 0
+        return (0, true)
     }
 
     func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {

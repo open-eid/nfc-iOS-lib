@@ -18,7 +18,7 @@
  */
 
 import CryptoTokenKit
-@MainActor
+
 protocol CardCommandsInternal: CardCommands {
     /**
      * The smart card reader used to communicate with the card.
