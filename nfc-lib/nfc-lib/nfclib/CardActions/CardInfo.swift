@@ -17,11 +17,12 @@
  *
  */
 
-public struct CardInfo: Sendable {
+public struct CardInfo: Sendable, Hashable {
     public var givenName: String
     public var surname: String
     public var personalCode: String
     public var citizenship: String
+    public var documentNumber: String
     public var dateOfExpiry: String
 
     public init(
@@ -29,12 +30,14 @@ public struct CardInfo: Sendable {
         surname: String = "",
         personalCode: String = "",
         citizenship: String = "",
+        documentNumber: String = "",
         dateOfExpiry: String = ""
     ) {
         self.givenName = givenName
         self.surname = surname
         self.personalCode = personalCode
         self.citizenship = citizenship
+        self.documentNumber = documentNumber
         self.dateOfExpiry = dateOfExpiry
     }
 
@@ -43,6 +46,7 @@ public struct CardInfo: Sendable {
         Name: \(givenName) \(surname)
         Personal Code: \(personalCode)
         Citizenship: \(citizenship)
+        Document number: \(documentNumber)
         Date of Expiry: \(dateOfExpiry)
         """
     }

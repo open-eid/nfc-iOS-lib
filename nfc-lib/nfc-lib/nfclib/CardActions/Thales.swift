@@ -29,7 +29,7 @@ extension CodeType {
     }
 }
 
-class Thales: CardCommandsInternal {
+final class Thales: CardCommandsInternal {
     static private let ATR = Bytes(hex: "3B FF 96 00 00 80 31 FE 43 80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F 1D")
     static private let kAID = Bytes(hex: "A0 00 00 00 63 50 4B 43 53 2D 31 35")
     static private let kAIDGlobal = Bytes(hex: "A0 00 00 00 18 10 02 03 00 00 00 00 00 00 00 01")
@@ -79,7 +79,8 @@ class Thales: CardCommandsInternal {
             case 2: personalData.givenName = record
             case 4: personalData.citizenship = !record.isEmpty ? record : "-"
             case 6: personalData.personalCode = record
-            case 8: personalData.dateOfExpiry = record.replacingOccurrences(of: " ", with: ".")
+            case 7: personalData.documentNumber = record
+            case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
             default: break
             }
         }
@@ -97,16 +98,24 @@ class Thales: CardCommandsInternal {
     }
 
     // MARK: - PIN & PUK Management
-    func readCodeTryCounterRecord(_ type: CodeType) async throws -> UInt8 {
+    
+    func readCodeTryCounterRecord(_ type: CodeType) async throws -> (retryCount: UInt8, pinActive: Bool) {
         _ = try await select(file: Thales.kAID)
         let data = try await reader.sendAPDU(ins: 0xCB, p1Byte: 0x00, p2Byte: 0xFF, data:
             [0xA0, 0x03, 0x83, 0x01, type.pinRef], leByte: 0)
-        if let info = TLV(from: data), info.tag == 0xA0 {
-            for record in TLV.sequenceOfRecords(from: info.value) ?? [] where record.tag == 0xdf21 {
-                return record.value[0]
+        var retryCount: UInt8 = 0
+        var pinActive = true
+        if let info = TLV(from: data), info.tag == 0xA0,
+           let records = TLV.sequenceOfRecords(from: info.value) {
+            for record in records {
+                switch record.tag {
+                case 0xdf21: retryCount = record.value[0]
+                case 0xdf2f: pinActive = record.value[0] == 0x01
+                default: break
+                }
             }
         }
-        return 0
+        return (retryCount, pinActive)
     }
 
     func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
@@ -125,6 +134,7 @@ class Thales: CardCommandsInternal {
         guard type != .puk else {
             throw IdCardInternalError.notSupportedCodeType
         }
+        _ = try await select(file: Thales.kAID)
         try await unblockCode(type.pinRef, puk: puk, newCode: newCode)
     }
 

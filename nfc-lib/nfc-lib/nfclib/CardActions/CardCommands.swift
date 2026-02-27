@@ -23,12 +23,19 @@ public enum CodeType: UInt {
     case puk = 0
     case pin1 = 1
     case pin2 = 2
+    
+    public var name: String {
+        switch self {
+        case .puk: return "PUK"
+        case .pin1: return "PIN1"
+        case .pin2: return "PIN2"
+        }
+    }
 }
 
 /**
  * A protocol defining commands for interacting with a smart card.
  */
-@MainActor
 public protocol CardCommands: Sendable {
     var canChangePUK: Bool { get }
     /**
@@ -62,7 +69,7 @@ public protocol CardCommands: Sendable {
      * - Throws: An error if the operation fails.
      * - Returns: The remaining attempts as an `UInt8`.
      */
-    func readCodeTryCounterRecord(_ type: CodeType) async throws -> UInt8
+    func readCodeTryCounterRecord(_ type: CodeType) async throws -> (retryCount: UInt8, pinActive: Bool)
 
     /**
      * Changes the PIN or PUK code.

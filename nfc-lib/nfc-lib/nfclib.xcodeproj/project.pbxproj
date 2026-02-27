@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -97,6 +97,10 @@
 		FAFB85ED2E3CACB7002BCEAC /* OperationUnblockPin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationUnblockPin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1A0437F52F4F28E400F9F930 /* Model */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Model; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
 		137957B12B0329890065716E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
@@ -117,12 +121,12 @@
 		1319EBC12B330AB000F69C0E /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */,
 				1319EBCA2B33209400F69C0E /* NFCConnection.swift */,
 				5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */,
 				139965B92B18351400D632C8 /* OperationReadPublicData.swift */,
 				13B8B8522B1D0D5D0017AA26 /* OperationSignHash.swift */,
 				FAFB85ED2E3CACB7002BCEAC /* OperationUnblockPin.swift */,
-				1A56CB172EA63A9300D00BFA /* UsbReaderConnection.swift */,
 			);
 			path = Operations;
 			sourceTree = "<group>";
@@ -147,6 +151,7 @@
 		137957B62B0329890065716E /* nfclib */ = {
 			isa = PBXGroup;
 			children = (
+				1A0437F52F4F28E400F9F930 /* Model */,
 				FA0F6E372E31040F00E8D99C /* CardActions */,
 				1319EBC12B330AB000F69C0E /* Operations */,
 				5A61B2862B285B8500694DA5 /* WebEID */,
@@ -256,6 +261,9 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1A0437F52F4F28E400F9F930 /* Model */,
 			);
 			name = nfclib;
 			packageProductDependencies = (
