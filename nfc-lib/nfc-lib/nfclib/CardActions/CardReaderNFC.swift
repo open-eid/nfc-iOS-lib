@@ -67,8 +67,8 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
     typealias TLV = TKBERTLVRecord
 
     let tag: SendableISO7816Tag
-    var ksEnc: Bytes
-    var ksMac: Bytes
+    var ksEnc: Bytes = AES.Zero
+    var ksMac: Bytes = AES.Zero
     var SSC: Bytes = AES.Zero
 
     init(_ tag: NFCISO7816Tag, CAN: String) async throws {
@@ -79,7 +79,8 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
         CardReaderNFC.logger.debug("Read CardAccess")
         let data = try await self.tag.sendCommand(cls: 0x00, ins: 0xB0, p1Byte: 0x00, p2Byte: 0x00, leByte: 256)
 
-        guard let (mappingType, parameterId) = TLV.sequenceOfRecords(from: data)?
+        let sanitizedData = sanitizedTLV(data)
+        guard let (mappingType, parameterId) = TLV.sequenceOfRecords(from: sanitizedData)?
             .flatMap({ cardAccess in TLV.sequenceOfRecords(from: cardAccess.value) ?? [] })
             .compactMap({ tlv in
                 if let records = TLV.sequenceOfRecords(from: tlv.value),
@@ -201,6 +202,35 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
         }
     }
 
+    private func sanitizedTLV(_ data: Data) -> Data {
+        guard data.count >= 2 else { return data }
+
+        var index = 1
+        let firstLengthByte = data[index]
+        index += 1
+
+        let valueLength: Int
+
+        if firstLengthByte & 0x80 == 0 {
+            valueLength = Int(firstLengthByte)
+        } else {
+            let lengthByteCount = Int(firstLengthByte & 0x7F)
+
+            guard data.count >= index + lengthByteCount else {
+                return data
+            }
+
+            valueLength = data[index..<(
+                index + lengthByteCount
+            )].reduce(0) { ($0 << 8) | Int($1) }
+
+            index += lengthByteCount
+        }
+
+        let totalLength = index + valueLength
+        return data.prefix(min(totalLength, data.count))
+    }
+    
     private func getDO87(_ apdu: NFCISO7816APDU) throws -> Data {
         if let data = apdu.data, !data.isEmpty {
             let ivValue = try AES.CBC(key: ksEnc).encrypt(SSC)
