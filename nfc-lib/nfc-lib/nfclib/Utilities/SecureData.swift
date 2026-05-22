@@ -21,7 +21,7 @@ import Foundation
 import Darwin // for memset_s
 
 /// Holds sensitive bytes and reliably zeroes them on deinit.
-public final class SecureData {
+public final class SecureData: Sendable {
     private var storage: Data
 
     public init(_ bytes: [UInt8]) {
