@@ -1,4 +1,0 @@
-module iR301 [system] {
-    private header "ReaderInterface.h"
-    export *
-}
