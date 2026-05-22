@@ -33,7 +33,6 @@ NFC-ID teek on arendatud m-valimiste projektis lähtudes vajadusest kasutada ID-
 # Arhitektuursed eesmärgid - kontekst, eeldused ja sõltuvused 
 
 Eesti ID-kaardil on olemas NFC liides, mille vahendusel on kättesaadav kogu ID-kaardi funktsionaalsus. Android ja iOS nutiseadmetel on sageli olemas NFC liides, mis võimaldaks ID kaarti nendel seadmetel kasutada.
-ID-kaart on juba kasutatav Android ja iOS nutiseadmetel, hetkel nõuab see nutiseadme USB porti kiipkaardilugeja ühendamist, mis on kasutajatele ebamugav. Rakendused, mis praegu ID-kaarti kasutavad, peavad ise realiseerima suhtlusprotokolli ID-kaardiga USB kaardilugeja ja APDU tasandil. 
 
 Eesti ID-kaardi kasutamiseks üle NFC liidese on tehtud teostatavusuuring, mille põhjal ei ole takistusi NFC lubamiseks. - Analysis of the Possibility to Use ID1 Card's NFC Interface for Authentication and Electronic Signing. Uuring kirjeldab ka võimalikku arhitektuuri NFC toe loomiseks, mis tähendab eraldi eID rakenduse loomist vältimaks olukorda, kus kolmandad osapooled lõppkasutajalt PIN koode küsima hakkavad. 
 
@@ -48,12 +47,7 @@ mõnevõrra erinev m-valimiste vajadustest, samas on nende rakenduste lähtekood
 ID-kaardiga suhtlemise abstraktsioonid (näiteks ee.ria.DigiDoc.idcard.Token ), mida on
 mõistlik loodava teegi juures arvestada.
 
-Otsides analooge väljastpoolt Eesti eID maastikku, leiame Yubikey tokenid - mitmerakenduselised
-USB tokenid, mille funktsionaalsus on kasutatav ka üle NFC liidese. Üheks paljudest rakendustest
-on PIV (Personal Identity Verification), mis on võrreldav ID-kaardiga. Yubikeyl on olemas
-näiterakendus ja teek mh. Android platvormile (https://github.com/Yubico/yubikit-android), mis
-kirjeldab võtmete kasutamist nii üle USB kui NFC liidese. Võrreldes Eesti rakendustega on siin
-täiendav abstraktsioon - suhtluskanal kaardiga võib olla USB või NFC.
+Otsides analooge väljastpoolt Eesti eID maastikku, leiame Yubikey tokenid - mitmerakenduselised USB tokenid, mille funktsionaalsus on kasutatav ka üle NFC liidese. Üheks paljudest rakendustest on PIV (Personal Identity Verification), mis on võrreldav ID-kaardiga. Yubikeyl on olemas näiterakendus ja teek mh. Android platvormile (https://github.com/Yubico/yubikit-android), mis kirjeldab võtmete kasutamist nii üle USB kui NFC liidese. Võrreldes Eesti rakendustega on siin täiendav abstraktsioon - suhtluskanal kaardiga võib olla USB või NFC.
 
 # Arhitektuurselt olulised nõudmised
 

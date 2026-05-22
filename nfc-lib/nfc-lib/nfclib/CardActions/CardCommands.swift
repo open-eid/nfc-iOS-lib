@@ -19,7 +19,7 @@
 
 import Foundation
 
-public enum CodeType: UInt {
+public enum CodeType: UInt, Sendable {
     case puk = 0
     case pin1 = 1
     case pin2 = 2
