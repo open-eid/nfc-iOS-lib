@@ -7,9 +7,22 @@ set -o pipefail
 PROJECT_NAME="nfclib"
 SCHEME_NAME="nfclib" # Replace with your scheme name
 OUTPUT_DIR="${PWD}/build" # Output directory
-CONFIGURATION="Debug" # Use `Debug` or `Release` based on your requirement
+CONFIGURATION="${1:-Release}" # Build configuration: Debug or Release (default Release)
+ENABLE_LOGGING="${2:-NO}"     # YES compiles in sensitive logging (-DENABLE_LOGGING); default NO
 PROJECT_PATH="${PWD}/${PROJECT_NAME}.xcodeproj"
 BUILD_DIR="${HOME}/Library/Developer/Xcode/DerivedData/${PROJECT_NAME}/Build/Products" # Add BUILD_DIR definition
+
+if [[ "$CONFIGURATION" != "Debug" && "$CONFIGURATION" != "Release" ]]; then
+  echo "Invalid configuration: '$CONFIGURATION'. Use 'Debug' or 'Release'."
+  exit 1
+fi
+
+SWIFT_LOGGING_FLAG=""
+case "$ENABLE_LOGGING" in
+  YES) SWIFT_LOGGING_FLAG="-DENABLE_LOGGING" ;;
+  NO) ;;
+  *) echo "Invalid ENABLE_LOGGING value: '$ENABLE_LOGGING'. Use 'YES' or 'NO'."; exit 1 ;;
+esac
 
 # Define universal output folder
 UNIVERSAL_OUTPUTFOLDER="${OUTPUT_DIR}/${CONFIGURATION}-universal"
@@ -28,7 +41,7 @@ for destination in "generic/platform=iOS" "generic/platform=iOS Simulator"; do
     -destination "${destination}" \
     -derivedDataPath "${HOME}/Library/Developer/Xcode/DerivedData/nfclib" \
     SKIP_INSTALL=NO \
-    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface"
+    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface ${SWIFT_LOGGING_FLAG}"
 done
 
 # Make sure the output directory exists
