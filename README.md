@@ -7,6 +7,8 @@
     - [Build the Library](#build-the-library)  
     - [Add the Library to the Application](#add-the-library-to-the-application)  
 - [Library Interfaces for ID Card Communication](#library-interfaces-for-id-card-communication)  
+- [Logging](#logging)  
+  - [Enabling Sensitive Logs (Debug Only)](#enabling-sensitive-logs-debug-only)  
 
 # Overview
 
@@ -44,8 +46,16 @@ You must declare NFC usage in your **Info.plist** file to explain why the applic
 ### Build the Library
 The goal is to build an `.xcframework` bundle that can be added as a dependency to other projects.
 
-- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`.  
-  - After execution, the project’s **build** folder will contain the file **nfclib.xcframework**.  
+- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`. It takes two optional arguments – the build configuration (`Debug` or `Release`, default `Release`) and whether to compile in sensitive logging (`YES` or `NO`, default `NO`):  
+
+  ```sh
+  ./build_xcframework.sh               # Release, no sensitive logging – for production / App Store
+  ./build_xcframework.sh Release YES   # Release with sensitive logging
+  ./build_xcframework.sh Debug YES     # Debug with sensitive logging – for local debugging
+  ```
+
+  - After execution, the **build** folder will contain **nfclib.xcframework** in a `<Configuration>-universal` subfolder.  
+  - Pass `YES` only for builds where you need sensitive logs. The production framework must be built with the default `NO`, which strips the sensitive-logging code from the binary.  
 
 ### Add the Library to the Application
 - Open the project where you want to integrate the `nfclib` library.  
@@ -104,3 +114,26 @@ Unblocks PIN2 using the PUK code and sets a new PIN:
 ```swift
 public func unblockPin2(CAN: String, puk: String, newCode: String) async throws
 ```
+
+# Logging
+
+The library logs through Apple's unified logging system (`OSLog`), under the subsystem `ee.ria.nfc-iOS-lib`. Most of it is harmless diagnostics – operation steps, reader status, errors. A separate set of logs (plaintext APDUs with **PIN1, PIN2, PUK**, session keys, and cryptographic intermediates) is sensitive and stays off unless you turn it on while debugging.
+
+## Enabling Sensitive Logs (Debug Only)
+
+> [!CAUTION]
+> These logs print PIN1, PIN2, PUK, and session keys in plaintext. Never enable them in a production / App Store build.
+
+While debugging, turn them on from your app – usually at startup, behind your own debug setting:
+
+```swift
+import nfclib
+
+NFCLibLogging.isEnabled = true  // Default is false
+```
+
+Set it back to `false` to turn them off again. The demo already wires this up in `nfc_demoApp.swift` (`mvoting-nfc/nfc-demo`), so the quickest way to try it is to switch that line to `true`.
+
+This only has an effect when the library was built with sensitive logging compiled in. For a framework built via the script, that's the `YES` argument (see [Build the Library](#build-the-library)); if you build the library from source instead (for example the demo workspace), add `-D ENABLE_LOGGING` to the `nfclib` target's **Other Swift Flags** (`OTHER_SWIFT_FLAGS`). Both default to off, so a production build has the code stripped and cannot log it regardless of this flag – but your app should still never set it to `true` in production.
+
+Once enabled, the sensitive logs appear under the same subsystem as everything else.  
