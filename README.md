@@ -8,7 +8,6 @@
     - [Add the Library to the Application](#add-the-library-to-the-application)  
 - [Library Interfaces for ID Card Communication](#library-interfaces-for-id-card-communication)  
 - [Logging](#logging)  
-  - [Viewing Library Logs](#viewing-library-logs)  
   - [Enabling Sensitive Logs (Debug Only)](#enabling-sensitive-logs-debug-only)  
 
 # Overview
