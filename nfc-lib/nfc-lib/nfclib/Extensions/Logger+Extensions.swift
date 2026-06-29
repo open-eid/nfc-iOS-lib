@@ -17,19 +17,23 @@
  *
  */
 
-import SwiftUI
-import nfclib
+import os
 
-@main
-struct mvoting_nfcApp: App {
-    init() {
-        // Set to true (and add -D ENABLE_LOGGING to the nfclib target's Other Swift Flags) to see sensitive logs.
-        NFCLibLogging.isEnabled = false
+public enum NFCLibLogging {
+    private static let enabled = OSAllocatedUnfairLock(initialState: false)
+
+    public static var isEnabled: Bool {
+        get { enabled.withLock { $0 } }
+        set { enabled.withLock { $0 = newValue } }
     }
+}
 
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+extension Logger {
+    func debugSensitive(_ message: @autoclosure () -> String) {
+        #if ENABLE_LOGGING
+        guard NFCLibLogging.isEnabled else { return }
+        let value = message()
+        debug("\(value, privacy: .public)")
+        #endif
     }
 }

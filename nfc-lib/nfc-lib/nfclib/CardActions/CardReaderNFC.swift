@@ -25,7 +25,7 @@ internal import SwiftECC
 import BigInt
 
 class CardReaderNFC: CardReader, @unchecked Sendable {
-    private static let logger = Logger(subsystem: "ee.ria.digidoc.RIADigiDoc", category: "CardReaderNFC")
+    private static let logger = Logger(subsystem: "ee.ria.nfc-iOS-lib", category: "CardReaderNFC")
     // swiftlint:disable identifier_name
     enum PasswordType: UInt8 {
         case id_PasswordType_MRZ = 1 // 0.4.0.127.0.7.2.2.12.1
@@ -105,9 +105,9 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
 
         // Step1 - General Authentication
         let nonceEnc = try await self.tag.sendPaceCommand(records: [], tagExpected: 0x80)
-        CardReaderNFC.logger.debug("Challenge \(nonceEnc.value.toHex)")
+        CardReaderNFC.logger.debugSensitive("Challenge \(nonceEnc.value.toHex)")
         let nonce = try CardReaderNFC.decryptNonce(CAN: CAN, encryptedNonce: nonceEnc.value)
-        CardReaderNFC.logger.debug("Nonce \(nonce.toHex)")
+        CardReaderNFC.logger.debugSensitive("Nonce \(nonce.toHex)")
 
         // Step2
         let mappedPoint: Point
@@ -123,24 +123,24 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
             let mappingKey = try await self.tag.sendPaceCommand(
                 records: [try TLV(tag: 0x81, publicKey: terminalPubKey)],
                 tagExpected: 0x82)
-            CardReaderNFC.logger.debug("Mapping key \(mappingKey.value.hex)")
+            CardReaderNFC.logger.debugSensitive("Mapping key \(mappingKey.value.hex)")
             let cardPubKey = try ECPublicKey(domain: domain, point: mappingKey.value)!
 
             // Mapping
             let nonceS = BInt(magnitude: nonce)
             let mappingBasePoint = ECPublicKey(privateKey: try ECPrivateKey(domain: domain, s: nonceS)) // S*G
             // swiftlint:disable line_length
-            CardReaderNFC.logger.debug("Card Key x: \(mappingBasePoint.w.x.asMagnitudeBytes().hex), y: \(mappingBasePoint.w.y.asMagnitudeBytes().hex)")
+            CardReaderNFC.logger.debugSensitive("Card Key x: \(mappingBasePoint.w.x.asMagnitudeBytes().hex), y: \(mappingBasePoint.w.y.asMagnitudeBytes().hex)")
             // swiftlint:enable line_length
             let sharedSecretH = try domain.multiplyPoint(cardPubKey.w, terminalPrivKey.s)
             // swiftlint:disable line_length
-            CardReaderNFC.logger.debug("Shared Secret x: \(sharedSecretH.x.asMagnitudeBytes().hex), y: \(sharedSecretH.y.asMagnitudeBytes().hex)")
+            CardReaderNFC.logger.debugSensitive("Shared Secret x: \(sharedSecretH.x.asMagnitudeBytes().hex), y: \(sharedSecretH.y.asMagnitudeBytes().hex)")
             // swiftlint:enable line_length
             mappedPoint = try domain.addPoints(mappingBasePoint.w, sharedSecretH) // MAP G = (S*G) + H
         }
         // Ephemeral data
         // swiftlint:disable line_length
-        CardReaderNFC.logger.debug("Mapped point x: \(mappedPoint.x.asMagnitudeBytes().toHex, privacy: .public), y: \(mappedPoint.y.asMagnitudeBytes().toHex, privacy: .public)")
+        CardReaderNFC.logger.debugSensitive("Mapped point x: \(mappedPoint.x.asMagnitudeBytes().toHex), y: \(mappedPoint.y.asMagnitudeBytes().toHex)")
         // swiftlint:enable line_length
         let mappedDomain = try Domain.instance(
             name: domain.name + " Mapped",
@@ -160,17 +160,17 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
             )],
             tagExpected: 0x84
         )
-        CardReaderNFC.logger.debug("Card Ephermal key \(ephemeralKey.value.toHex)")
+        CardReaderNFC.logger.debugSensitive("Card Ephermal key \(ephemeralKey.value.toHex)")
         guard let ephemeralCardPubKey = try ECPublicKey(domain: mappedDomain, point: ephemeralKey.value)
         else { throw IdCardInternalError.authenticationFailed }
 
         // Derive shared secret and session keys
         let sharedSecret = try terminalEphemeralPrivKey.sharedSecret(pubKey: ephemeralCardPubKey)
-        CardReaderNFC.logger.debug("Shared secret \(sharedSecret.toHex)")
+        CardReaderNFC.logger.debugSensitive("Shared secret \(sharedSecret.toHex)")
         ksEnc = CardReaderNFC.KDF(key: sharedSecret, counter: 1)
         ksMac = CardReaderNFC.KDF(key: sharedSecret, counter: 2)
-        CardReaderNFC.logger.debug("KS.Enc \(self.ksEnc.toHex)")
-        CardReaderNFC.logger.debug("KS.Mac \(self.ksMac.toHex)")
+        CardReaderNFC.logger.debugSensitive("KS.Enc \(self.ksEnc.toHex)")
+        CardReaderNFC.logger.debugSensitive("KS.Mac \(self.ksMac.toHex)")
 
         // Mutual authentication
         let macCalc = try AES.CMAC(key: ksMac)
@@ -190,7 +190,7 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
             )],
             tagExpected: 0x86
         )
-        CardReaderNFC.logger.debug("Mac response \(macValue.data.toHex)")
+        CardReaderNFC.logger.debugSensitive("Mac response \(macValue.data.toHex)")
 
         // verify chip's MAC
         let macResult = TLV(tag: 0x7f49, records: [
@@ -276,7 +276,7 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
     }
 
     func transmit(_ apduData: Bytes) async throws -> (responseData: Bytes, sw: UInt16) {
-        CardReaderNFC.logger.debug("Plain >: \(apduData.toHex)")
+        CardReaderNFC.logger.debugSensitive("Plain >: \(apduData.toHex)")
         guard let apdu = NFCISO7816APDU(data: Data(apduData)) else {
             throw IdCardInternalError.invalidAPDU
         }
@@ -309,14 +309,14 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
             throw IdCardInternalError.invalidMACValue
         }
         guard let tlvEnc else {
-            CardReaderNFC.logger.debug("Plain <: \(tlvRes.value.toHex)")
+            CardReaderNFC.logger.debugSensitive("Plain <: \(tlvRes.value.toHex)")
             return (.init(), UInt16(tlvRes.value[0], tlvRes.value[1]))
         }
         let ivValue = try AES.CBC(key: ksEnc).encrypt(SSC)
         let responseData = try (try AES.CBC(key: ksEnc, ivVal: ivValue)
             .decrypt(tlvEnc.tag == 0x85 ? tlvEnc.value : tlvEnc.value[1...]))
             .removePadding()
-        CardReaderNFC.logger.debug("Plain <:  \(responseData.toHex) \(tlvRes.value.toHex)")
+        CardReaderNFC.logger.debugSensitive("Plain <:  \(responseData.toHex) \(tlvRes.value.toHex)")
         return (Bytes(responseData), UInt16(tlvRes.value[0], tlvRes.value[1]))
     }
 
