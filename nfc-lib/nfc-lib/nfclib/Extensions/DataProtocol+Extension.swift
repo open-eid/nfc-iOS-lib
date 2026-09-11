@@ -18,7 +18,6 @@
  */
 
 import Foundation
-internal import SwiftECC
 
 extension DataProtocol where Self.Index == Int {
     var toHex: String {

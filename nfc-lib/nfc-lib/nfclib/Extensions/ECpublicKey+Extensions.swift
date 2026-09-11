@@ -17,8 +17,7 @@
  *
  */
 
-import CommonCrypto
-import CryptoTokenKit
+import Foundation
 internal import SwiftECC
 
 extension ECPublicKey {

@@ -21,11 +21,10 @@ import OSLog
 @preconcurrency import CoreNFC
 import CryptoTokenKit
 
-struct SendableISO7816Tag: Sendable {
+@MainActor
+struct SendableISO7816Tag {
     var tag: NFCISO7816Tag
 }
-
-private struct NFCISO7816TagLogger {}
 
 extension SendableISO7816Tag {
 
@@ -45,7 +44,15 @@ extension SendableISO7816Tag {
             data: data,
             expectedResponseLength: leByte
         )
-        let result = try await tag.sendCommand(apdu: apdu)
+        let result: (Data, UInt8, UInt8) = try await withCheckedThrowingContinuation { continuation in
+            tag.sendCommand(apdu: apdu) { responseData, sw1, sw2, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: (responseData, sw1, sw2))
+                }
+            }
+        }
         switch result {
         case (_, 0x63, 0x00):
             throw IdCardInternalError.canAuthenticationFailed

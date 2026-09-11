@@ -18,43 +18,44 @@
  */
 
 import Foundation
+import Synchronization
 import Darwin // for memset_s
 
 /// Holds sensitive bytes and reliably zeroes them on deinit.
 public final class SecureData: Sendable {
-    private var storage: Data
+    private let storage: Mutex<Data>
 
     public init(_ bytes: [UInt8]) {
-        self.storage = Data(bytes)
+        self.storage = Mutex(Data(bytes))
     }
 
     public init(_ data: Data) {
-        self.storage = data
+        self.storage = Mutex(data)
     }
 
     deinit { secureZero() }
 
-    /// Mutating read-only access to the underlying bytes.
-    func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
-        try storage.withUnsafeBytes(body)
+    /// Read-only access to the underlying bytes. The lock is held for the duration of `body`,
+    /// which must not call back into this instance.
+    func withUnsafeBytes<R: Sendable>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
+        try storage.withLock { try $0.withUnsafeBytes(body) }
     }
 
-    /// Mutating access when you need to write into the buffer.
-    func withUnsafeMutableBytes<R>(_ body: (UnsafeMutableRawBufferPointer) throws -> R) rethrows -> R {
-        try storage.withUnsafeMutableBytes(body)
+    /// Mutating access when you need to write into the buffer. Same re-entrancy rule as above.
+    func withUnsafeMutableBytes<R: Sendable>(_ body: (UnsafeMutableRawBufferPointer) throws -> R) rethrows -> R {
+        try storage.withLock { try $0.withUnsafeMutableBytes(body) }
     }
 
-    public var count: Int { storage.count }
+    public var count: Int { storage.withLock { $0.count } }
 
     /// Explicitly wipe now (also runs on deinit).
     public func secureZero() {
-        guard storage.count > 0 else { return }
-        storage.withUnsafeMutableBytes { buf in
-            _ = memset_s(buf.baseAddress, buf.count, 0, buf.count)
+        storage.withLock { data in
+            guard !data.isEmpty else { return }
+            data.withUnsafeMutableBytes { buf in
+                _ = memset_s(buf.baseAddress, buf.count, 0, buf.count)
+            }
+            data.removeAll(keepingCapacity: false)
         }
-        storage.removeAll(keepingCapacity: false)
     }
-
-    /// If you need a temporary `Data` view (try to avoid).
-    func asData() -> Data { storage }
 }

@@ -19,11 +19,8 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
 import Security
+
 
 // MARK: - Local Types
 
