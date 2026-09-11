@@ -19,10 +19,6 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
 
 @MainActor final public class OperationReadPublicData: NSObject {
     private var session: NFCTagReaderSession?

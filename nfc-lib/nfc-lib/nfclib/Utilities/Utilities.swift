@@ -18,10 +18,7 @@
  */
 
 import Foundation
-internal import SwiftECC
-import CommonCrypto
-import CoreNFC
-import BigInt
+import Security
 
 public let rsaAlgorithmName = "RSA"
 public let ecAlgorithmName = "EC"

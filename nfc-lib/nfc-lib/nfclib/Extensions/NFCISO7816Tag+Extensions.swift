@@ -25,8 +25,6 @@ struct SendableISO7816Tag: Sendable {
     var tag: NFCISO7816Tag
 }
 
-private struct NFCISO7816TagLogger {}
-
 extension SendableISO7816Tag {
 
     func sendCommand(

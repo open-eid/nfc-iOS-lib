@@ -22,7 +22,7 @@ import CoreNFC
 import CommonCrypto
 import CryptoTokenKit
 internal import SwiftECC
-import BigInt
+internal import BigInt
 
 class CardReaderNFC: CardReader, @unchecked Sendable {
     private static let logger = Logger(subsystem: "ee.ria.digidoc.RIADigiDoc", category: "CardReaderNFC")
@@ -123,18 +123,18 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
             let mappingKey = try await self.tag.sendPaceCommand(
                 records: [try TLV(tag: 0x81, publicKey: terminalPubKey)],
                 tagExpected: 0x82)
-            CardReaderNFC.logger.debug("Mapping key \(mappingKey.value.hex)")
+            CardReaderNFC.logger.debug("Mapping key \(mappingKey.value.toHex)")
             let cardPubKey = try ECPublicKey(domain: domain, point: mappingKey.value)!
 
             // Mapping
             let nonceS = BInt(magnitude: nonce)
             let mappingBasePoint = ECPublicKey(privateKey: try ECPrivateKey(domain: domain, s: nonceS)) // S*G
             // swiftlint:disable line_length
-            CardReaderNFC.logger.debug("Card Key x: \(mappingBasePoint.w.x.asMagnitudeBytes().hex), y: \(mappingBasePoint.w.y.asMagnitudeBytes().hex)")
+            CardReaderNFC.logger.debug("Card Key x: \(mappingBasePoint.w.x.asMagnitudeBytes().toHex), y: \(mappingBasePoint.w.y.asMagnitudeBytes().toHex)")
             // swiftlint:enable line_length
             let sharedSecretH = try domain.multiplyPoint(cardPubKey.w, terminalPrivKey.s)
             // swiftlint:disable line_length
-            CardReaderNFC.logger.debug("Shared Secret x: \(sharedSecretH.x.asMagnitudeBytes().hex), y: \(sharedSecretH.y.asMagnitudeBytes().hex)")
+            CardReaderNFC.logger.debug("Shared Secret x: \(sharedSecretH.x.asMagnitudeBytes().toHex), y: \(sharedSecretH.y.asMagnitudeBytes().toHex)")
             // swiftlint:enable line_length
             mappedPoint = try domain.addPoints(mappingBasePoint.w, sharedSecretH) // MAP G = (S*G) + H
         }
@@ -432,31 +432,6 @@ class CardReaderNFC: CardReader, @unchecked Sendable {
 
 
 // MARK: - Extensions
-
-extension DataProtocol {
-    var hex: String {
-        map { String(format: "%02x", $0) }.joined()
-    }
-
-    func chunked(into size: Int) -> [SubSequence] {
-        stride(from: 0, to: count, by: size).map {
-            self[index(startIndex, offsetBy: $0) ..< index(startIndex, offsetBy: Swift.min($0 + size, count))]
-        }
-    }
-
-    func removePadding() throws -> SubSequence {
-        var index = endIndex
-        while index != startIndex {
-            formIndex(before: &index)
-            if self[index] == 0x80 {
-                return self[startIndex..<index]
-            } else if self[index] != 0x00 {
-                throw IdCardInternalError.failedToRemovePadding
-            }
-        }
-        throw IdCardInternalError.failedToRemovePadding
-    }
-}
 
 extension UInt16 {
     init(_ p1Byte: UInt8, _ p2Byte: UInt8) {

@@ -19,8 +19,6 @@
 
 import Foundation
 @preconcurrency import CoreNFC
-import BigInt
-import CryptoTokenKit
 
 @MainActor
 public class NFCConnection {

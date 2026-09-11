@@ -22,12 +22,12 @@ import Foundation
 import Security
 import CoreNFC
 
-public struct SignResult {
+public struct SignResult: Sendable {
     public let signedData: Data
     public let signingCertificate: Data
 }
 
-public struct Operator {
+public struct Operator: Sendable {
     public init() {}
 }
 

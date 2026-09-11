@@ -19,10 +19,6 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
 import Security
 internal import X509
 
@@ -202,19 +198,4 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
         self.session = nil
     }
 
-    public func mapToAlgorithm(algorithm: String, bitLength: Int) -> String? {
-        switch algorithm {
-        case ecAlgorithmName:
-            return "ES\(bitLength)"
-        case rsaAlgorithmName:
-            return "RS\(bitLength)"
-        default:
-            return nil
-        }
-    }
-}
-
-public struct SignatureAlgorithmInfo {
-    let name: String
-    let bitSize: Int
 }

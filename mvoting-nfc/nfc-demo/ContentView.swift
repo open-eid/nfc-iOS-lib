@@ -27,7 +27,7 @@ struct ContentView: View {
         case sha384 = "SHA-384"
     }
 
-    @StateObject private var viewModel = ViewModel()
+    @State private var viewModel = ViewModel()
     @State private var challenge: String = "fake_challenge"
     @State private var origin: String = "https://valimised.ee"
     @State private var dataToSign: String = "JÕEORG"
@@ -68,9 +68,9 @@ struct ContentView: View {
                             }
                         }
                         .pickerStyle(SegmentedPickerStyle())
-                        .onChange(of: selectedMethod, perform: { value in
+                        .onChange(of: selectedMethod) {
                             viewModel.computeHash(selectedMethod, dataToSign)
-                        })
+                        }
                         .onAppear {
                             viewModel.computeHash(selectedMethod, dataToSign)
                         }
@@ -238,15 +238,15 @@ struct ContentView: View {
 
 extension ContentView {
 
-    @MainActor class ViewModel: ObservableObject {
+    @MainActor @Observable class ViewModel {
         let cardOperator = Operator()
-        @Published var cardInfo: CardInfo?
-        @Published var webEidData: WebEidData?
-        @Published var authCert: String?
-        @Published var signingCert: String?
-        @Published var signingResult: String?
-        @Published var hashedData: Data?
-        @Published var hashedDataString: String?
+        var cardInfo: CardInfo?
+        var webEidData: WebEidData?
+        var authCert: String?
+        var signingCert: String?
+        var signingResult: String?
+        var hashedData: Data?
+        var hashedDataString: String?
 
         func computeHash(_ selectedMethod: HashMethod, _ dataToHashString: String) {
             guard let dataToHash = dataToHashString.data(using: .utf8) else { return }
