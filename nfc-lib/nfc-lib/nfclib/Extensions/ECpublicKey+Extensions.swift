@@ -1,8 +1,7 @@
 // SPDX-FileCopyrightText: Estonian Information System Authority
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
-import CommonCrypto
-import CryptoTokenKit
+import Foundation
 internal import SwiftECC
 
 extension ECPublicKey {

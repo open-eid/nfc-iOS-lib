@@ -43,17 +43,18 @@ for destination in "generic/platform=iOS" "generic/platform=iOS Simulator"; do
     -destination "${destination}" \
     -derivedDataPath "${HOME}/Library/Developer/Xcode/DerivedData/nfclib" \
     SKIP_INSTALL=NO \
-    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface ${SWIFT_LOGGING_FLAG}"
+    OTHER_SWIFT_FLAGS="${SWIFT_LOGGING_FLAG}"
 done
 
 # Make sure the output directory exists
 mkdir -p "${UNIVERSAL_OUTPUTFOLDER}"
 
 # Ensure the documentation directory exists before copying
-if [ -d "${PROJECT_DIR}/../doc" ]; then
-    cp -R "${PROJECT_DIR}/../doc" "${UNIVERSAL_OUTPUTFOLDER}/"
+DOCS_DIR="$(cd "${PWD}/../.." && pwd)/docs"
+if [ -d "${DOCS_DIR}" ]; then
+    cp -R "${DOCS_DIR}" "${UNIVERSAL_OUTPUTFOLDER}/"
 else
-    echo "Documentation directory not found: ${PROJECT_DIR}/../doc"
+    echo "Documentation directory not found: ${DOCS_DIR}"
 fi
 
 # Step 2. Create multiplatform binary framework bundle

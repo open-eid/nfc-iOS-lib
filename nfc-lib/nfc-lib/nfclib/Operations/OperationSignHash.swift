@@ -3,11 +3,6 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
-import CryptoKit
 
 @MainActor
 public class OperationSignHash: NSObject {
