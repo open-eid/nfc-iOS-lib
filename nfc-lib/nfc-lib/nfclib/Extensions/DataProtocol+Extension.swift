@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import Foundation
-internal import SwiftECC
 
 extension DataProtocol where Self.Index == Int {
     var toHex: String {
