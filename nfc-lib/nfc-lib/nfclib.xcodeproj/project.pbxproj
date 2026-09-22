@@ -23,7 +23,7 @@
 		5A61B2882B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B2872B288C3100694DA5 /* OperationAuthenticateWithWebEID.swift */; };
 		5A61B28C2B2895ED00694DA5 /* WebEIDHash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A61B28B2B2895ED00694DA5 /* WebEIDHash.swift */; };
 		5AD523BC2B2214B10033B88A /* OperationReadCertificate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD523BB2B2214B10033B88A /* OperationReadCertificate.swift */; };
-		5EEC1BB92CEBB06C0022D377 /* X509 in Frameworks */ = {isa = PBXBuildFile; productRef = 5EEC1BB82CEBB06C0022D377 /* X509 */; };
+		5EEC1BB92CEBB06C0022D377 /* BigInt in Frameworks */ = {isa = PBXBuildFile; productRef = 5EEC1BB82CEBB06C0022D377 /* BigInt */; };
 		7D8E1EE22D01C6CE00F13D71 /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D8E1EE12D01C6CA00F13D71 /* ProgressBar.swift */; };
 		FA0F6E2E2E30EA0400E8D99C /* IDCardError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0F6E2D2E30EA0200E8D99C /* IDCardError.swift */; };
 		FA0F6E302E30EA3800E8D99C /* CardInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0F6E2F2E30EA3800E8D99C /* CardInfo.swift */; };
@@ -70,7 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5EEC1BB92CEBB06C0022D377 /* X509 in Frameworks */,
+				5EEC1BB92CEBB06C0022D377 /* BigInt in Frameworks */,
 				133C3AC22B4D95A9006F9DBD /* SwiftECC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -204,7 +204,7 @@
 			name = nfclib;
 			packageProductDependencies = (
 				133C3AC12B4D95A9006F9DBD /* SwiftECC */,
-				5EEC1BB82CEBB06C0022D377 /* X509 */,
+				5EEC1BB82CEBB06C0022D377 /* BigInt */,
 			);
 			productName = "nfc-lib";
 			productReference = 137957B42B0329890065716E /* nfclib.framework */;
@@ -236,7 +236,7 @@
 			mainGroup = 137957AA2B0329890065716E;
 			packageReferences = (
 				133C3AC02B4D95A9006F9DBD /* XCRemoteSwiftPackageReference "SwiftECC" */,
-				5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */,
+				5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "BigInt" */,
 			);
 			productRefGroup = 137957B52B0329890065716E /* Products */;
 			projectDirPath = "";
@@ -346,7 +346,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -408,7 +408,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -438,7 +438,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -455,7 +455,7 @@
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -477,7 +477,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -493,7 +493,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -527,15 +527,15 @@
 			repositoryURL = "https://github.com/leif-ibsen/SwiftECC";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.1.0;
+				minimumVersion = 5.5.0;
 			};
 		};
-		5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */ = {
+		5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "BigInt" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-certificates.git";
+			repositoryURL = "https://github.com/leif-ibsen/BigInt";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.6.1;
+				minimumVersion = 1.24.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -546,10 +546,10 @@
 			package = 133C3AC02B4D95A9006F9DBD /* XCRemoteSwiftPackageReference "SwiftECC" */;
 			productName = SwiftECC;
 		};
-		5EEC1BB82CEBB06C0022D377 /* X509 */ = {
+		5EEC1BB82CEBB06C0022D377 /* BigInt */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "swift-certificates" */;
-			productName = X509;
+			package = 5EEC1BB72CEBB06C0022D377 /* XCRemoteSwiftPackageReference "BigInt" */;
+			productName = BigInt;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

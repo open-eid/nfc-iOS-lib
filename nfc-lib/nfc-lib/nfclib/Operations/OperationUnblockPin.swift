@@ -19,11 +19,6 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
-import Security
 
 public enum UnblockPINError: Error {
     case missingRequiredParameter

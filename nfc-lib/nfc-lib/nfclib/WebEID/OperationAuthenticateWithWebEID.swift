@@ -19,12 +19,7 @@
 
 import Foundation
 import CoreNFC
-import CommonCrypto
-import CryptoTokenKit
-internal import SwiftECC
-import BigInt
 import Security
-internal import X509
 
 public enum AuthenticateWithWebEidError: Error {
     case failedToReadPublicKey
@@ -104,10 +99,7 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                 let certBytes = try await cardCommands.readAuthenticationCertificate()
                 let authCertificate = try convertBytesToX509Certificate(certBytes)
 
-                // assuming authCertificate is `Certificate` from Swift-Certificates
-                let certificate = try Certificate(authCertificate)
-                let notAfter = certificate.notValidAfter
-                let notBefore = certificate.notValidBefore
+                let (notBefore, notAfter) = try validateCertificateStructure(authCertificate)
 
                 guard Date() >= notBefore else {
                     let errorMessage = "Certificate not yet valid"
@@ -202,19 +194,4 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
         self.session = nil
     }
 
-    public func mapToAlgorithm(algorithm: String, bitLength: Int) -> String? {
-        switch algorithm {
-        case ecAlgorithmName:
-            return "ES\(bitLength)"
-        case rsaAlgorithmName:
-            return "RS\(bitLength)"
-        default:
-            return nil
-        }
-    }
-}
-
-public struct SignatureAlgorithmInfo {
-    let name: String
-    let bitSize: Int
 }
