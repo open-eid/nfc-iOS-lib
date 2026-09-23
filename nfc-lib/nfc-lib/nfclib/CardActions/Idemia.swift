@@ -71,6 +71,7 @@ final class Idemia: CardCommandsInternal {
             case 1: personalData.surname = record
             case 2: personalData.givenName = record
             case 4: personalData.citizenship = !record.isEmpty ? record : "-"
+            case 5: personalData.dateAndPlaceOfBirth = record
             case 6: personalData.personalCode = record
             case 7: personalData.documentNumber = record
             case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
@@ -102,19 +103,20 @@ final class Idemia: CardCommandsInternal {
            let a0Value = TLV(from: tag.value), a0Value.tag == 0xA0,
            let records = TLV.sequenceOfRecords(from: a0Value.value) {
             for record in records where record.tag == 0x9B {
-                return (record.value[0], true)
+                guard let counter = record.value.first else { continue }
+                return (counter, true)
             }
         }
-        return (0, true)
+        throw IdCardInternalError.invalidResponse(message: "Missing PIN counter record")
     }
 
     func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
         _ = try await select(file: type.aid)
-        try await changeCode(type.pinRef, to: code, verifyCode: verifyCode)
+        try await changeCode(type.pinRef, codeType: type, to: code, verifyCode: verifyCode)
     }
 
     func verifyCode(_ type: CodeType, code: SecureData) async throws {
-        try await verifyCode(type.pinRef, code: code)
+        try await verifyCode(type.pinRef, codeType: type, code: code)
     }
 
     func unblockCode(_ type: CodeType, puk: SecureData, newCode: SecureData) async throws {
@@ -125,7 +127,7 @@ final class Idemia: CardCommandsInternal {
         if type == .pin2 {
             _ = try await select(file: type.aid)
         }
-        try await unblockCode(type.pinRef, puk: nil, newCode: newCode)
+        try await unblockCode(type.pinRef, codeType: type, puk: nil, newCode: newCode)
     }
 
     // MARK: - Authentication & Signing

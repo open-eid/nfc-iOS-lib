@@ -22,17 +22,21 @@ public class OperationSignHash: NSObject {
     public func startSigning(CAN: String, PIN2: SecureData, hash: Data) async throws -> Data {
 
         return try await withCheckedThrowingContinuation { continuation in
+            guard self.continuation == nil else {
+                continuation.resume(throwing: IdCardInternalError.operationInProgress)
+                return
+            }
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
+                self.finish(.failure(IdCardInternalError.nfcNotSupported))
                 return
             }
             self.CAN = CAN
             self.PIN = PIN2
             self.hashToSign = hash
 
-            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
+            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             updateAlertMessage(step: 0)
             session?.begin()
         }
@@ -52,6 +56,13 @@ public class OperationSignHash: NSObject {
         message += "\n\n\(progressBar.generate())"
         session?.alertMessage = message
     }
+
+    private func finish(_ result: Result<Data, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        PIN = SecureData([0x00])
+        continuation.resume(with: result)
+    }
 }
 
 extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
@@ -61,26 +72,29 @@ extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
             do {
                 updateAlertMessage(step: 1)
                 guard let hashToSign else {
-                    return
+                    throw IdCardInternalError.invalidAPDU
                 }
+                let pin2 = PIN
                 let tag = try await connection.setup(session, tags: tags)
                 updateAlertMessage(step: 2)
                 let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
                 updateAlertMessage(step: 3)
-                let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: PIN)
-                continuation?.resume(with: .success(signatureValue))
+                let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: pin2)
+                finish(.success(signatureValue))
                 session.alertMessage = "Data read"
                 session.invalidate()
             } catch {
+                finish(.failure(error))
                 session.invalidate(errorMessage: "Failed to read data")
-                continuation?.resume(throwing: error)
             }
         }
     }
 
     public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+        guard session === self.session else { return }
         self.session = nil
+        finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
     }
 }
