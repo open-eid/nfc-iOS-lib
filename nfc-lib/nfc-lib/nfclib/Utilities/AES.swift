@@ -19,7 +19,6 @@
 
 import CommonCrypto
 import Foundation
-internal import SwiftECC
 
 class AES {
     typealias DataType = DataProtocol & ContiguousBytes

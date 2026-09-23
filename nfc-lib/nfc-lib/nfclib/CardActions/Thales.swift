@@ -17,7 +17,7 @@
  *
  */
 
-import CryptoTokenKit
+import Foundation
 
 extension CodeType {
     fileprivate var pinRef: UInt8 {
