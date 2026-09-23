@@ -59,10 +59,7 @@ NFC-ID teek peab võimaldama kaardilt isikuandmete lugemist. Minimaalselt vajali
 * Isikukood
 
 ### Kaardi haldamine
-NFC-ID teek peab võimaldama PIN1 ja PIN2 loendurite lugemist.
-
-ID-kaardi spetsifikatsiooni kohaselt on võimalik ka PUK loenduri lugemine ning PIN1, PIN2 ja PUK
-koodide muutmine. Need funktsionaalsused ei ole NFC-ID teegi skoobis.
+NFC-ID teek võimaldab PIN1, PIN2 ja PUK loendurite lugemist.
 
 ### Sertifikaatide lugemine
 NFC-ID teek peab võimaldama kaardilt lugeda autentimissertifikaati ja allkirjastamissertifikaati.
@@ -91,18 +88,13 @@ võimaldavate mehhanismide valikut.
 NFC-ID teek on vahesamm teel eraldiseisva eID rakenduse suunas. Teegi kasutamine eeldab selle
 kompileerimist ja levitamist klientrakenduse osana.
 
-## Lahtiütlused
-NFC-ID teek ei realiseeri kõiki ID-kaardi poolt toetatud funktsionaalsuseid, täpsemalt peame silmas
-järgmist:
-* PIN/PUK koodide muutmine
-* Dekrüpteerimine
-
 NFC-ID teek vahendab suhtlust ID-kaardiga.
 
 ### Rakenduste ülesandeks on:
 * Sisendandmete ettevalmistamine (nt. räsimine)
 * Väljundandmete pakendamine
-* cani ja pini pikkuse kontroll
+* CAN-koodi pikkuse kontroll
+* NFC-seansi kasutajaliides ja selle tekstide lokaliseerimine
 
 ## Autentimine
 ID-kaardiga autentimisel võime eristada kahte viisi autentimiseks - TLS-CCA ja Web-eID
