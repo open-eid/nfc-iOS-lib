@@ -78,6 +78,7 @@ final class Thales: CardCommandsInternal {
             case 1: personalData.surname = record
             case 2: personalData.givenName = record
             case 4: personalData.citizenship = !record.isEmpty ? record : "-"
+            case 5: personalData.dateAndPlaceOfBirth = record
             case 6: personalData.personalCode = record
             case 7: personalData.documentNumber = record
             case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
@@ -103,17 +104,21 @@ final class Thales: CardCommandsInternal {
         _ = try await select(file: Thales.kAID)
         let data = try await reader.sendAPDU(ins: 0xCB, p1Byte: 0x00, p2Byte: 0xFF, data:
             [0xA0, 0x03, 0x83, 0x01, type.pinRef], leByte: 0)
-        var retryCount: UInt8 = 0
+        guard let info = TLV(from: data), info.tag == 0xA0,
+              let records = TLV.sequenceOfRecords(from: info.value) else {
+            throw IdCardInternalError.invalidResponse(message: "Missing PIN counter record")
+        }
+        var retryCount: UInt8?
         var pinActive = true
-        if let info = TLV(from: data), info.tag == 0xA0,
-           let records = TLV.sequenceOfRecords(from: info.value) {
-            for record in records {
-                switch record.tag {
-                case 0xdf21: retryCount = record.value[0]
-                case 0xdf2f: pinActive = record.value[0] == 0x01
-                default: break
-                }
+        for record in records {
+            switch record.tag {
+            case 0xdf21: retryCount = record.value.first
+            case 0xdf2f: pinActive = record.value.first == 0x01
+            default: break
             }
+        }
+        guard let retryCount else {
+            throw IdCardInternalError.invalidResponse(message: "Missing PIN counter record")
         }
         return (retryCount, pinActive)
     }
@@ -123,11 +128,11 @@ final class Thales: CardCommandsInternal {
             throw IdCardInternalError.notSupportedCodeType
         }
         _ = try await select(file: Thales.kAID)
-        try await changeCode(type.pinRef, to: code, verifyCode: verifyCode)
+        try await changeCode(type.pinRef, codeType: type, to: code, verifyCode: verifyCode)
     }
 
     func verifyCode(_ type: CodeType, code: SecureData) async throws {
-        try await verifyCode(type.pinRef, code: code)
+        try await verifyCode(type.pinRef, codeType: type, code: code)
     }
 
     func unblockCode(_ type: CodeType, puk: SecureData, newCode: SecureData) async throws {
@@ -135,7 +140,7 @@ final class Thales: CardCommandsInternal {
             throw IdCardInternalError.notSupportedCodeType
         }
         _ = try await select(file: Thales.kAID)
-        try await unblockCode(type.pinRef, puk: puk, newCode: newCode)
+        try await unblockCode(type.pinRef, codeType: type, puk: puk, newCode: newCode)
     }
 
     // MARK: - Authentication & Signing
@@ -164,6 +169,9 @@ final class Thales: CardCommandsInternal {
     }
 
     func calculateSignature(for hash: Data, withPin2 pin2: SecureData) async throws -> Data {
+        let (_, pin2Changed) = try await readCodeTryCounterRecord(.pin2)
+        guard pin2Changed else { throw IdCardInternalError.notActivated }
+
         _ = try await select(file: Thales.kAID)
         return try await sign(type: .pin2, pin: pin2, keyRef: Thales.SIGNKEY, hash: hash)
     }
