@@ -140,7 +140,7 @@ final class Thales: CardCommandsInternal {
             throw IdCardInternalError.notSupportedCodeType
         }
         _ = try await select(file: Thales.kAID)
-        try await unblockCode(type.pinRef, codeType: type, puk: puk, newCode: newCode)
+        try await unblockCode(type.pinRef, codeType: .puk, puk: puk, newCode: newCode)
     }
 
     // MARK: - Authentication & Signing
