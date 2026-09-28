@@ -1,5 +1,5 @@
 {
-  "originHash" : "f1e8ca0c57a6ae02490b3eacdbd9acabefd510614f20e1d560dce4d07b522a65",
+  "originHash" : "bc89f156c9f6a24605f3088abb263f456c9f350521b3db1933b90747f54f3e20",
   "pins" : [
     {
       "identity" : "asn1",
@@ -13,7 +13,7 @@
     {
       "identity" : "bigint",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/leif-ibsen/BigInt",
+      "location" : "https://github.com/leif-ibsen/BigInt.git",
       "state" : {
         "revision" : "7c7b1be2f6714ce03833879b0aab4b20293c0207",
         "version" : "1.24.0"
