@@ -4,8 +4,7 @@
   - [Application Requirements](#application-requirements)  
     - [Enable NFC Capability](#enable-nfc-capability)  
     - [Update Info.plist](#update-infoplist)  
-    - [Build the Library](#build-the-library)  
-    - [Add the Library to the Application](#add-the-library-to-the-application)  
+    - [Add the Library as a Swift Package](#add-the-library-as-a-swift-package)
 - [Library Interfaces for ID Card Communication](#library-interfaces-for-id-card-communication)  
 - [Logging](#logging)  
   - [Enabling Sensitive Logs (Debug Only)](#enabling-sensitive-logs-debug-only)  
@@ -19,7 +18,7 @@ The NFC-ID library is not intended for public use. It is a low-level technical l
 The NFC-ID library was originally developed within the m-valimiste project, based on the need to use the ID card inside the m-Voting client application.  
 
 # Demo Application Run Guide
-- Open **mvtng-nfc-demo.xcworkspace**. This workspace includes both the demo app and the `nfclib` library.  
+- Open **mvoting-nfc/nfc-demo.xcodeproj**. The demo app uses the Swift package at the repository root.
 - Wait until **Swift Package Manager** dependencies are fully downloaded.  
 - Select **Product → Run**.  
 
@@ -43,27 +42,10 @@ You must declare NFC usage in your **Info.plist** file to explain why the applic
 - Add a new key: **Privacy – NFC Scan Usage Description** (`NFCReaderUsageDescription`).  
 - Set its value to a string explaining why the app requires NFC access. This text will be displayed to the user the first time the app attempts to use NFC.  
 
-### Build the Library
-The goal is to build an `.xcframework` bundle that can be added as a dependency to other projects.
-
-- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`. It takes two optional arguments – the build configuration (`Debug` or `Release`, default `Release`) and whether to compile in sensitive logging (`YES` or `NO`, default `NO`):  
-
-  ```sh
-  ./build_xcframework.sh               # Release, no sensitive logging – for production / App Store
-  ./build_xcframework.sh Release YES   # Release with sensitive logging
-  ./build_xcframework.sh Debug YES     # Debug with sensitive logging – for local debugging
-  ```
-
-  - After execution, the **build** folder will contain **nfclib.xcframework** in a `<Configuration>-universal` subfolder.  
-  - Pass `YES` only for builds where you need sensitive logs. The production framework must be built with the default `NO`, which strips the sensitive-logging code from the binary.  
-
-### Add the Library to the Application
-- Open the project where you want to integrate the `nfclib` library.  
-- Select the project, then under **TARGETS**, choose the correct target.  
-- In the **General** tab of the target, find the **Frameworks and Libraries** section.  
-- Click **+ → Add Other… → Add Files… → Select nfclib.xcframework**.  
-
-The NFC library is now integrated into your application.  
+### Add the Library as a Swift Package
+- In Xcode, choose **File → Add Package Dependencies… → Add Local…** and select this repository's root directory. For a remote dependency, use the repository URL and select a revision containing `Package.swift`.
+- Add the `IdCardLib` product to your app target. Import the library in Swift with `import nfclib`.
+- Set the app's minimum deployment target to iOS 18 or later.
 
 # Library Interfaces for ID Card Communication
 The library provides the following operation classes for ID card communication:
@@ -134,6 +116,6 @@ NFCLibLogging.isEnabled = true  // Default is false
 
 Set it back to `false` to turn them off again. The demo already wires this up in `nfc_demoApp.swift` (`mvoting-nfc/nfc-demo`), so the quickest way to try it is to switch that line to `true`.
 
-This only has an effect when the library was built with sensitive logging compiled in. For a framework built via the script, that's the `YES` argument (see [Build the Library](#build-the-library)); if you build the library from source instead (for example the demo workspace), add `-D ENABLE_LOGGING` to the `nfclib` target's **Other Swift Flags** (`OTHER_SWIFT_FLAGS`). Both default to off, so a production build has the code stripped and cannot log it regardless of this flag – but your app should still never set it to `true` in production.
+This only has an effect when the library was built with sensitive logging compiled in. For local package debugging, add `.define("ENABLE_LOGGING")` to the `nfclib` target's `swiftSettings` in `Package.swift`. Remove it before a production build so the sensitive logging code is stripped from the binary. Your app should also leave `NFCLibLogging.isEnabled` set to `false` in production.
 
 Once enabled, the sensitive logs appear under the same subsystem as everything else.  

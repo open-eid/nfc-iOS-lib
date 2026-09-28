@@ -3,57 +3,37 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		13176D752B3193F70093D806 /* CardInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13176D742B3193F70093D806 /* CardInfoView.swift */; };
-		1319EBC32B330BB500F69C0E /* nfclib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1319EBC22B330BB500F69C0E /* nfclib.framework */; };
-		1319EBC42B330BB500F69C0E /* nfclib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1319EBC22B330BB500F69C0E /* nfclib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		139195AC2AFA29CC00EDA022 /* nfc_demoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139195AB2AFA29CC00EDA022 /* nfc_demoApp.swift */; };
-		139195AE2AFA29CC00EDA022 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 139195AD2AFA29CC00EDA022 /* ContentView.swift */; };
-		139195B02AFA29CD00EDA022 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 139195AF2AFA29CD00EDA022 /* Assets.xcassets */; };
-		139195B32AFA29CD00EDA022 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 139195B22AFA29CD00EDA022 /* Preview Assets.xcassets */; };
-		1A0AA6F32E8EB4D2000B11FA /* CardOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */; };
-		1A0AA6F42E8EB4D2000B11FA /* Operator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0AA6F12E8EB4D2000B11FA /* Operator.swift */; };
+		B73A95A32F7C4F59A4123720 /* IdCardLib in Frameworks */ = {isa = PBXBuildFile; productRef = B73A95A22F7C4F59A4123720 /* IdCardLib */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		1319EBC52B330BB500F69C0E /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				1319EBC42B330BB500F69C0E /* nfclib.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		13176D742B3193F70093D806 /* CardInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardInfoView.swift; sourceTree = "<group>"; };
-		1319EBC22B330BB500F69C0E /* nfclib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = nfclib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		137E71132B04FAC90065282B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		139195A82AFA29CC00EDA022 /* nfc-demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "nfc-demo.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		139195AB2AFA29CC00EDA022 /* nfc_demoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nfc_demoApp.swift; sourceTree = "<group>"; };
-		139195AD2AFA29CC00EDA022 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		139195AF2AFA29CD00EDA022 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		139195B22AFA29CD00EDA022 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		1392583F2B04B06A00AD38EA /* nfc-demo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "nfc-demo.entitlements"; sourceTree = "<group>"; };
-		1A0AA6F12E8EB4D2000B11FA /* Operator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operator.swift; sourceTree = "<group>"; };
-		1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardOperations.swift; sourceTree = "<group>"; };
-		5A2C028B2B060E9D00C6D249 /* SkSigningLib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = SkSigningLib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		5A9969882B03B9A4002A1060 /* nfc_lib.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = nfc_lib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		4E7CD94E306AF90B009D43BD /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 139195A72AFA29CC00EDA022 /* nfc-demo */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		4E7CD944306AF90A009D43BD /* nfc-demo */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (4E7CD94E306AF90B009D43BD /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = "nfc-demo"; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		139195A52AFA29CC00EDA022 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1319EBC32B330BB500F69C0E /* nfclib.framework in Frameworks */,
+				B73A95A32F7C4F59A4123720 /* IdCardLib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -63,9 +43,8 @@
 		1391959F2AFA29CC00EDA022 = {
 			isa = PBXGroup;
 			children = (
-				139195AA2AFA29CC00EDA022 /* nfc-demo */,
 				139195A92AFA29CC00EDA022 /* Products */,
-				5A9969872B03B9A4002A1060 /* Frameworks */,
+				4E7CD944306AF90A009D43BD /* nfc-demo */,
 			);
 			sourceTree = "<group>";
 		};
@@ -75,40 +54,6 @@
 				139195A82AFA29CC00EDA022 /* nfc-demo.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		139195AA2AFA29CC00EDA022 /* nfc-demo */ = {
-			isa = PBXGroup;
-			children = (
-				137E71132B04FAC90065282B /* Info.plist */,
-				1392583F2B04B06A00AD38EA /* nfc-demo.entitlements */,
-				139195AB2AFA29CC00EDA022 /* nfc_demoApp.swift */,
-				139195AD2AFA29CC00EDA022 /* ContentView.swift */,
-				13176D742B3193F70093D806 /* CardInfoView.swift */,
-				139195AF2AFA29CD00EDA022 /* Assets.xcassets */,
-				139195B12AFA29CD00EDA022 /* Preview Content */,
-				1A0AA6F12E8EB4D2000B11FA /* Operator.swift */,
-				1A0AA6F22E8EB4D2000B11FA /* CardOperations.swift */,
-			);
-			path = "nfc-demo";
-			sourceTree = "<group>";
-		};
-		139195B12AFA29CD00EDA022 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				139195B22AFA29CD00EDA022 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		5A9969872B03B9A4002A1060 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				1319EBC22B330BB500F69C0E /* nfclib.framework */,
-				5A2C028B2B060E9D00C6D249 /* SkSigningLib.framework */,
-				5A9969882B03B9A4002A1060 /* nfc_lib.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -121,14 +66,17 @@
 				139195A42AFA29CC00EDA022 /* Sources */,
 				139195A52AFA29CC00EDA022 /* Frameworks */,
 				139195A62AFA29CC00EDA022 /* Resources */,
-				1319EBC52B330BB500F69C0E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				4E7CD944306AF90A009D43BD /* nfc-demo */,
+			);
 			name = "nfc-demo";
 			packageProductDependencies = (
+				B73A95A22F7C4F59A4123720 /* IdCardLib */,
 			);
 			productName = "mvoting-nfc";
 			productReference = 139195A82AFA29CC00EDA022 /* nfc-demo.app */;
@@ -150,7 +98,7 @@
 				};
 			};
 			buildConfigurationList = 139195A32AFA29CC00EDA022 /* Build configuration list for PBXProject "nfc-demo" */;
-			compatibilityVersion = "Xcode 14.0";
+			compatibilityVersion = "Xcode 15.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -159,6 +107,7 @@
 			);
 			mainGroup = 1391959F2AFA29CC00EDA022;
 			packageReferences = (
+				B73A95A12F7C4F59A4123720 /* XCLocalSwiftPackageReference ".." */,
 			);
 			productRefGroup = 139195A92AFA29CC00EDA022 /* Products */;
 			projectDirPath = "";
@@ -174,8 +123,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				139195B32AFA29CD00EDA022 /* Preview Assets.xcassets in Resources */,
-				139195B02AFA29CD00EDA022 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,11 +133,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				139195AE2AFA29CC00EDA022 /* ContentView.swift in Sources */,
-				139195AC2AFA29CC00EDA022 /* nfc_demoApp.swift in Sources */,
-				1A0AA6F32E8EB4D2000B11FA /* CardOperations.swift in Sources */,
-				1A0AA6F42E8EB4D2000B11FA /* Operator.swift in Sources */,
-				13176D752B3193F70093D806 /* CardInfoView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -249,7 +191,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -306,7 +248,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -335,7 +277,6 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -368,7 +309,6 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -404,6 +344,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		B73A95A12F7C4F59A4123720 /* XCLocalSwiftPackageReference ".." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ..;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B73A95A22F7C4F59A4123720 /* IdCardLib */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = IdCardLib;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 139195A02AFA29CC00EDA022 /* Project object */;
 }
