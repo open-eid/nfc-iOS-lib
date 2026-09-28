@@ -22,6 +22,8 @@
 /// This protocol defines a set of operations for interacting with a card,
 /// including NFC support checking, reading card information, and performing
 /// authentication and signing operations.
+import Foundation
+import Security
 import nfclib
 
 public protocol CardOperations {
