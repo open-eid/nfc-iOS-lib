@@ -4,8 +4,7 @@
   - [Application Requirements](#application-requirements)  
     - [Enable NFC Capability](#enable-nfc-capability)  
     - [Update Info.plist](#update-infoplist)  
-    - [Build the Library](#build-the-library)  
-    - [Add the Library to the Application](#add-the-library-to-the-application)  
+    - [Add the Library as a Swift Package](#add-the-library-as-a-swift-package)
 - [Library Interfaces for ID Card Communication](#library-interfaces-for-id-card-communication)  
 
 # Overview
@@ -17,7 +16,7 @@ The NFC-ID library is not intended for public use. It is a low-level technical l
 The NFC-ID library was originally developed within the m-valimiste project, based on the need to use the ID card inside the m-Voting client application.  
 
 # Demo Application Run Guide
-- Open **mvtng-nfc-demo.xcworkspace**. This workspace includes both the demo app and the `nfclib` library.  
+- Open **mvoting-nfc/nfc-demo.xcodeproj**. The demo app uses the Swift package at the repository root.
 - Wait until **Swift Package Manager** dependencies are fully downloaded.  
 - Select **Product → Run**.  
 
@@ -41,19 +40,10 @@ You must declare NFC usage in your **Info.plist** file to explain why the applic
 - Add a new key: **Privacy – NFC Scan Usage Description** (`NFCReaderUsageDescription`).  
 - Set its value to a string explaining why the app requires NFC access. This text will be displayed to the user the first time the app attempts to use NFC.  
 
-### Build the Library
-The goal is to build an `.xcframework` bundle that can be added as a dependency to other projects.
-
-- Run the script `build_xcframework.sh`, located at `nfc-lib/nfc-lib/build_xcframework.sh`.  
-  - After execution, the project’s **build** folder will contain the file **nfclib.xcframework**.  
-
-### Add the Library to the Application
-- Open the project where you want to integrate the `nfclib` library.  
-- Select the project, then under **TARGETS**, choose the correct target.  
-- In the **General** tab of the target, find the **Frameworks and Libraries** section.  
-- Click **+ → Add Other… → Add Files… → Select nfclib.xcframework**.  
-
-The NFC library is now integrated into your application.  
+### Add the Library as a Swift Package
+- In Xcode, choose **File → Add Package Dependencies… → Add Local…** and select this repository's root directory. For a remote dependency, use the repository URL and select a revision containing `Package.swift`.
+- Add the `IdCardLib` product to your app target. Import the library in Swift with `import nfclib`.
+- Set the app's minimum deployment target to iOS 18 or later.
 
 # Library Interfaces for ID Card Communication
 The library provides the following operation classes for ID card communication:
