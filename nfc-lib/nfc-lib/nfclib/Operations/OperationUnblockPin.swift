@@ -27,7 +27,6 @@ import Security
 
 public enum UnblockPINError: Error {
     case missingRequiredParameter
-    case failed
     case general
 }
 
@@ -45,10 +44,14 @@ public class OperationUnblockPin: NSObject {
     public func startReading(CAN: String, codeType: CodeType, puk: SecureData, newPin: SecureData) async throws {
 
         return try await withCheckedThrowingContinuation { continuation in
+            guard self.continuation == nil else {
+                continuation.resume(throwing: IdCardInternalError.operationInProgress)
+                return
+            }
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
+                self.finish(.failure(IdCardInternalError.nfcNotSupported))
                 return
             }
 
@@ -56,10 +59,18 @@ public class OperationUnblockPin: NSObject {
             self.codeType = codeType
             self.puk = puk
             self.newPin = newPin
-            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
+            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             session?.alertMessage = nfcMessage
             session?.begin()
         }
+    }
+
+    private func finish(_ result: Result<Void, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        puk = nil
+        newPin = nil
+        continuation.resume(with: result)
     }
 }
 
@@ -67,12 +78,8 @@ extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            defer {
-                self.session = nil
-            }
-
             guard let codeType = self.codeType, let puk = self.puk, let newPin = self.newPin else {
-                self.continuation?.resume(throwing: UnblockPINError.missingRequiredParameter)
+                finish(.failure(UnblockPINError.missingRequiredParameter))
                 session.invalidate(errorMessage: "PIN change failed")
                 return
             }
@@ -80,25 +87,23 @@ extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
                 session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await self.connection.setup(session, tags: tags)
                 let cardCommands = try await self.connection.getCardCommands(session, tag: tag, CAN: self.CAN)
-                do {
-                    try await cardCommands.unblockCode(codeType, puk: puk, newCode: newPin)
-                } catch {
-                    throw UnblockPINError.failed
-                }
+                try await cardCommands.unblockCode(codeType, puk: puk, newCode: newPin)
 
-                self.continuation?.resume(with: .success(()))
+                finish(.success(()))
                 session.alertMessage = "PIN changed"
                 session.invalidate()
             } catch {
+                finish(.failure(error))
                 session.invalidate(errorMessage: "PIN change failed")
-                self.continuation?.resume(throwing: error)
             }
         }
     }
 
     public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+        guard session === self.session else { return }
         self.session = nil
+        finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
     }
 }

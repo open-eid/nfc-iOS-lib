@@ -54,31 +54,37 @@ public class OperationReadCertificate: NSObject {
     public func startReading(CAN: String, certUsage: CertificateUsage) async throws -> SecCertificate {
 
         return try await withCheckedThrowingContinuation { continuation in
+            guard self.continuation == nil else {
+                continuation.resume(throwing: IdCardInternalError.operationInProgress)
+                return
+            }
             self.continuation = continuation
 
             guard NFCTagReaderSession.readingAvailable else {
-                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
+                self.finish(.failure(IdCardInternalError.nfcNotSupported))
                 return
             }
 
             self.CAN = CAN
             self.certUsage = certUsage
-            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
+            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             session?.alertMessage = nfcMessage
             session?.begin()
         }
+    }
+
+    private func finish(_ result: Result<SecCertificate, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        continuation.resume(with: result)
     }
 }
 
 extension OperationReadCertificate: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task { @MainActor in
-            defer {
-                self.session = nil
-            }
-
             guard let certUsage else {
-                continuation?.resume(throwing: ReadCertificateError.certificateUsageNotSpecified)
+                finish(.failure(ReadCertificateError.certificateUsageNotSpecified))
                 session.invalidate(errorMessage: "Failed to read data")
                 return
             }
@@ -91,30 +97,30 @@ extension OperationReadCertificate: @MainActor NFCTagReaderSessionDelegate {
                     case .auth:
                         let cert = try await cardCommands.readAuthenticationCertificate()
                         let x509Certificate = try convertBytesToX509Certificate(cert)
-                        continuation?.resume(with: .success(x509Certificate))
+                        finish(.success(x509Certificate))
                     case .sign:
                         let cert = try await cardCommands.readSignatureCertificate()
                         let x509Certificate = try convertBytesToX509Certificate(cert)
-                        continuation?.resume(with: .success(x509Certificate))
+                        finish(.success(x509Certificate))
                     }
                     session.alertMessage = "Data read"
                     session.invalidate()
                 } catch {
+                    finish(.failure(ReadCertificateError.failedToReadCertificate))
                     session.invalidate(errorMessage: "Failed to read data")
-                    continuation?.resume(throwing: ReadCertificateError.failedToReadCertificate)
                 }
             } catch {
+                finish(.failure(error))
                 session.invalidate(errorMessage: "Failed to read data")
-                continuation?.resume(throwing: error)
             }
         }
     }
 
     public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
-        Task { @MainActor in
-            self.session = nil
-        }
+    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+        guard session === self.session else { return }
+        self.session = nil
+        finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
     }
 }

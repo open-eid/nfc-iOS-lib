@@ -64,7 +64,10 @@ extension CardCommandsInternal {
         return data
     }
 
-    private func errorForPinActionResponse(execute: () async throws -> Void) async throws {
+    private func errorForPinActionResponse(
+        _ codeType: CodeType,
+        execute: () async throws -> Void
+    ) async throws {
         do {
             try await execute()
         } catch let error {
@@ -75,11 +78,14 @@ extension CardCommandsInternal {
                 case 0x6A80:  // New pin is invalid
                     throw IdCardInternalError.invalidNewPin
                 case 0x63C0, 0x6983: // Authentication method blocked
-                    throw IdCardInternalError.pinVerificationFailed
+                    throw IdCardInternalError.pinVerificationFailed(codeType: codeType)
                 // For pin codes this means verification failed due to wrong pin
                 case let uInt16 where (uInt16 & 0xFFF0) == 0x63C0:
                     // Last char in trailer holds retry count
-                    throw IdCardInternalError.remainingPinRetryCount(Int(uInt16 & 0x000F))
+                    throw IdCardInternalError.remainingPinRetryCount(
+                        codeType: codeType,
+                        count: Int(uInt16 & 0x000F)
+                    )
                 default:
                     throw error
                 }
@@ -110,14 +116,24 @@ extension CardCommandsInternal {
         return out
     }
 
-    func changeCode(_ pinRef: UInt8, to code: SecureData, verifyCode: SecureData) async throws {
-        try await errorForPinActionResponse {
+    func changeCode(
+        _ pinRef: UInt8,
+        codeType: CodeType,
+        to code: SecureData,
+        verifyCode: SecureData
+    ) async throws {
+        try await errorForPinActionResponse(codeType) {
             _ = try await reader.sendAPDU(ins: 0x24, p2Byte: pinRef, data: pinTemplate(verifyCode) + pinTemplate(code))
         }
     }
 
-    func unblockCode(_ pinRef: UInt8, puk: SecureData?, newCode: SecureData) async throws {
-        try await errorForPinActionResponse {
+    func unblockCode(
+        _ pinRef: UInt8,
+        codeType: CodeType,
+        puk: SecureData?,
+        newCode: SecureData
+    ) async throws {
+        try await errorForPinActionResponse(codeType) {
             _ = try await reader
                 .sendAPDU(
                     ins: 0x2C,
@@ -128,8 +144,8 @@ extension CardCommandsInternal {
         }
     }
 
-    func verifyCode(_ pinRef: UInt8, code: SecureData) async throws {
-        try await errorForPinActionResponse {
+    func verifyCode(_ pinRef: UInt8, codeType: CodeType, code: SecureData) async throws {
+        try await errorForPinActionResponse(codeType) {
             _ = try await reader.sendAPDU(ins: 0x20, p2Byte: pinRef, data: pinTemplate(code))
         }
     }

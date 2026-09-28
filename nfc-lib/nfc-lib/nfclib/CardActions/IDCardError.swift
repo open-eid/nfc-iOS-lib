@@ -17,11 +17,14 @@
  *
  */
 
+import CoreNFC
+
 public enum IdCardError: Error {
     case wrongCAN,
-         wrongPIN(triesLeft: Int),
+         wrongPIN(codeType: CodeType, triesLeft: Int),
          invalidNewPIN,
-         sessionError
+         sessionError,
+         notActivated
 }
 
 public enum IdCardInternalError: Error {
@@ -34,8 +37,8 @@ public enum IdCardInternalError: Error {
          sendCommandFailed(message: String),
          invalidResponse(message: String),
          swError(UInt16),
-         pinVerificationFailed,
-         remainingPinRetryCount(Int),
+         pinVerificationFailed(codeType: CodeType),
+         remainingPinRetryCount(codeType: CodeType, count: Int),
          invalidNewPin,
          notSupportedCodeType,
          dataPaddingError,
@@ -52,7 +55,9 @@ public enum IdCardInternalError: Error {
          sessionInvalidated,
          readerProcessFailed,
          failedToRemovePadding,
-         notSupportedAlgorithm
+         notSupportedAlgorithm,
+         operationInProgress,
+         notActivated
 
     public func getIdCardError() -> IdCardError {
         switch self {
@@ -79,21 +84,33 @@ public enum IdCardInternalError: Error {
                 .sessionInvalidated,
                 .readerProcessFailed,
                 .failedToRemovePadding,
-                .notSupportedAlgorithm:
+                .notSupportedAlgorithm,
+                .operationInProgress:
             return .sessionError
+        case .notActivated:
+            return .notActivated
         case .canAuthenticationFailed:
             return .wrongCAN
-        case .pinVerificationFailed:
-            return .wrongPIN(triesLeft: 0)
-        case .remainingPinRetryCount(let value):
-            return .wrongPIN(triesLeft: value)
+        case .pinVerificationFailed(let codeType):
+            return .wrongPIN(codeType: codeType, triesLeft: 0)
+        case .remainingPinRetryCount(let codeType, let count):
+            return .wrongPIN(codeType: codeType, triesLeft: count)
         case .invalidNewPin:
             return .invalidNewPIN
         }
     }
 }
 
-public struct PinError: Error {
-    let msg: String
-    let remainingCount: Int
+extension IdCardInternalError {
+    static func mapSessionInvalidation(_ error: Error) -> Error {
+        guard let readerError = error as? NFCReaderError else { return error }
+        switch readerError.code {
+        case .readerSessionInvalidationErrorUserCanceled:
+            return IdCardInternalError.cancelledByUser
+        case .readerSessionInvalidationErrorSessionTimeout:
+            return IdCardInternalError.sessionInvalidated
+        default:
+            return error
+        }
+    }
 }

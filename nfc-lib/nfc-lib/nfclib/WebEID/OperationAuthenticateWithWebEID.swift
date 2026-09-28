@@ -38,7 +38,7 @@ public enum AuthenticateWithWebEidError: Error {
 @MainActor
 public class OperationAuthenticateWithWebEID: NSObject {
     private let CAN: String
-    private let pin1: SecureData
+    private var pin1: SecureData?
     private let challenge: String
     private let origin: String
     private let connection = NFCConnection()
@@ -55,12 +55,16 @@ public class OperationAuthenticateWithWebEID: NSObject {
 
     public func startReading() async throws -> WebEidData {
         return try await withCheckedThrowingContinuation { continuation in
-            self.continuation = continuation
-            guard NFCTagReaderSession.readingAvailable else {
-                continuation.resume(throwing: IdCardInternalError.nfcNotSupported)
+            guard self.continuation == nil else {
+                continuation.resume(throwing: IdCardInternalError.operationInProgress)
                 return
             }
-            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self)
+            self.continuation = continuation
+            guard NFCTagReaderSession.readingAvailable else {
+                self.finish(.failure(IdCardInternalError.nfcNotSupported))
+                return
+            }
+            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             updateAlertMessage(step: 0)
             session?.begin()
         }
@@ -84,16 +88,19 @@ public class OperationAuthenticateWithWebEID: NSObject {
 
         session?.alertMessage = message
     }
+
+    private func finish(_ result: Result<WebEidData, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        pin1 = nil
+        continuation.resume(with: result)
+    }
 }
 
 extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegate {
     public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
         Task { @MainActor [weak self] in
             guard let self else { return }
-            defer {
-                self.session = nil
-            }
-
             do {
                 updateAlertMessage(step: 1)
                 let tag = try await connection.setup(session, tags: tags)
@@ -111,29 +118,29 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
 
                 guard Date() >= notBefore else {
                     let errorMessage = "Certificate not yet valid"
+                    finish(.failure(AuthenticateWithWebEidError.failedCertificateNotYetValid))
                     session.invalidate(errorMessage: errorMessage)
-                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateNotYetValid)
                     return
                 }
 
                 guard Date() <= notAfter else {
                     let errorMessage = "Certificate has expired"
+                    finish(.failure(AuthenticateWithWebEidError.failedCertificateExpired))
                     session.invalidate(errorMessage: errorMessage)
-                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedCertificateExpired)
                     return
                 }
 
                 guard let publicKey = SecCertificateCopyKey(authCertificate) else {
                     let errorMessage = "Failed to read data"
+                    finish(.failure(AuthenticateWithWebEidError.failedToReadPublicKey))
                     session.invalidate(errorMessage: errorMessage)
-                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToReadPublicKey)
                     return
                 }
 
                 guard let keyAlgorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
                     let errorMessage = "Failed to read data"
+                    finish(.failure(AuthenticateWithWebEidError.failedToDetermineAlgorithm))
                     session.invalidate(errorMessage: errorMessage)
-                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToDetermineAlgorithm)
                     return
                 }
 
@@ -145,12 +152,13 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                       let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
                 else {
                     let errorMessage = "Failed to read data"
+                    finish(.failure(AuthenticateWithWebEidError.failedToHashData))
                     session.invalidate(errorMessage: errorMessage)
-                    continuation?.resume(throwing: AuthenticateWithWebEidError.failedToHashData)
                     return
                 }
 
                 updateAlertMessage(step: 4)
+                guard let pin1 else { throw IdCardInternalError.pinVerificationFailed(codeType: .pin1) }
                 let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
                 let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
 
@@ -160,12 +168,12 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                     signature: authResult.base64EncodedString(),
                     signingCertificate: signingCertificateBytes.base64EncodedString()
                 )
-                continuation?.resume(returning: webEidData)
+                finish(.success(webEidData))
                 session.alertMessage = "Data read"
                 session.invalidate()
             } catch {
+                finish(.failure(error))
                 session.invalidate(errorMessage: "Failed to read data")
-                continuation?.resume(throwing: error)
             }
         }
     }
@@ -198,8 +206,10 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
 
     public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
-    public func tagReaderSession(_: NFCTagReaderSession, didInvalidateWithError _: Error) {
+    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
+        guard session === self.session else { return }
         self.session = nil
+        finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
     }
 
     public func mapToAlgorithm(algorithm: String, bitLength: Int) -> String? {

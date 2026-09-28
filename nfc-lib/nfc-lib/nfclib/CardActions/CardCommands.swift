@@ -33,6 +33,35 @@ public enum CodeType: UInt, Sendable {
     }
 }
 
+public enum CodeValidationFailure: Error, Sendable, Equatable {
+    case wrongLength(minimum: Int, maximum: Int)
+    case notNumeric
+}
+
+public extension CodeType {
+    var minimumLength: Int {
+        switch self {
+        case .pin1: return 4
+        case .pin2: return 5
+        case .puk: return 8
+        }
+    }
+
+    var maximumLength: Int { 12 }
+
+    var validLength: ClosedRange<Int> { minimumLength...maximumLength }
+
+    func validateFormat(_ code: [UInt8]) -> CodeValidationFailure? {
+        guard code.allSatisfy({ $0 >= 0x30 && $0 <= 0x39 }) else {
+            return .notNumeric
+        }
+        guard validLength.contains(code.count) else {
+            return .wrongLength(minimum: minimumLength, maximum: maximumLength)
+        }
+        return nil
+    }
+}
+
 /**
  * A protocol defining commands for interacting with a smart card.
  */
