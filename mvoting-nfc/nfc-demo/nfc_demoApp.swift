@@ -7,7 +7,7 @@ import nfclib
 @main
 struct mvoting_nfcApp: App {
     init() {
-        // Set to true (and add -D ENABLE_LOGGING to the nfclib target's Other Swift Flags) to see sensitive logs.
+        // Set to true (and enable ENABLE_LOGGING in the nfclib package target) to see sensitive logs.
         NFCLibLogging.isEnabled = false
     }
 
