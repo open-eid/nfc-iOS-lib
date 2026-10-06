@@ -3,8 +3,6 @@
 
 import Foundation
 @preconcurrency import CoreNFC
-import BigInt
-import CryptoTokenKit
 
 @MainActor
 public class NFCConnection {
@@ -21,7 +19,15 @@ public class NFCConnection {
         }
 
         do {
-            try await session.connect(to: firstTag)
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                session.connect(to: firstTag) { error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume()
+                    }
+                }
+            }
         } catch {
             session.invalidate(errorMessage: "Failed to read data")
             throw IdCardInternalError.connectionFailed
