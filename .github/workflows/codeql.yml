@@ -1,0 +1,108 @@
+# SPDX-FileCopyrightText: Estonian Information System Authority
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+name: CodeQL
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: "0 3 * * 1" # Weekly
+
+jobs:
+  swift:
+    name: CodeQL (swift)
+    if: contains(github.repository, 'open-eid/nfc-iOS-lib')
+    runs-on: macos-26
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    concurrency:
+      group: codeql-swift-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    strategy:
+      matrix:
+        xcode:
+          - 26.6
+        platform:
+          - iOS
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Setup environment
+      run: |
+        export LANG=en_US.UTF-8
+
+        sudo xcode-select -s /Applications/Xcode_${{ matrix.xcode }}.app
+    - name: Resolve package dependencies
+      run: |
+        cd ${{ github.workspace }}
+
+        rm -rf ~/Library/Developer/Xcode/DerivedData/*
+        rm -rf "${{ runner.temp }}/codeql-build"
+        rm -rf ${{ github.workspace }}/.build
+
+        xcodebuild -resolvePackageDependencies \
+          -workspace mvtng-nfc-demo.xcworkspace \
+          -scheme nfclib \
+          -derivedDataPath "${{ runner.temp }}/codeql-build"
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: swift
+        build-mode: manual
+    - name: Build
+      run: |
+        cd ${{ github.workspace }}
+
+        xcodebuild build \
+          -workspace mvtng-nfc-demo.xcworkspace \
+          -scheme nfclib \
+          -destination 'generic/platform=iOS Simulator' \
+          -derivedDataPath "${{ runner.temp }}/codeql-build" \
+          COMPILATION_CACHE_ENABLE_CACHING=NO \
+          SWIFT_ENABLE_COMPILE_CACHE=NO \
+          SWIFT_USE_INTEGRATED_DRIVER=NO \
+          -quiet
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v4
+    - name: Clean up
+      if: ${{ always() }}
+      run: |
+        rm -rf ~/Library/Developer/Xcode/DerivedData/*
+        rm -rf "${{ runner.temp }}/codeql-build"
+        rm -rf ${{ github.workspace }}/.build
+
+  scripts:
+    name: CodeQL (${{ matrix.language }})
+    if: contains(github.repository, 'open-eid/nfc-iOS-lib')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    concurrency:
+      group: codeql-${{ matrix.language }}-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: ${{ matrix.language }}
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: "/language:${{ matrix.language }}"
