@@ -22,6 +22,5 @@ let package = Package(
                 .product(name: "SwiftECC", package: "SwiftECC")
             ]
         )
-    ],
-    swiftLanguageModes: [.v5]
+    ]
 )

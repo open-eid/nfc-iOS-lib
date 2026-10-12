@@ -4,17 +4,13 @@
 import Foundation
 import CommonCrypto
 
-enum HashLength: Int {
-    case bits256 = 256
-    case bits384 = 384
-    case bits512 = 512
+enum HashLength {
+    case bits256
+    case bits384
+    case bits512
 }
 
-func hashLengthFromInt(_ intValue: Int) -> HashLength? {
-    return HashLength(rawValue: intValue)
-}
-
-func sha(hashLength: HashLength, data: Data) -> Data? {
+func sha(hashLength: HashLength, data: Data) -> Data {
     let digestLength: Int
     let hashFunction: (UnsafeRawPointer?, CC_LONG, UnsafeMutablePointer<UInt8>?) -> UnsafeMutablePointer<UInt8>?
 
