@@ -8,7 +8,6 @@ import Security
 public enum AuthenticateWithWebEidError: Error {
     case failedToReadPublicKey
     case failedToDetermineAlgorithm
-    case failedToHashData
     case failedToMapAlgorithm
     case failedCertificateExpired
     case failedCertificateNotYetValid
@@ -113,25 +112,12 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                     return
                 }
 
-                guard let keyAlgorithmData = getAlgorithmNameTypeAndLength(from: publicKey) else {
-                    let errorMessage = "Failed to read data"
-                    finish(.failure(AuthenticateWithWebEidError.failedToDetermineAlgorithm))
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
+                let algorithm = try WebEidSignatureAlgorithm.forAuthenticationKey(publicKey)
+                let hashLength = algorithm.hashLength
 
-                guard let hashLength = hashLengthFromInt(keyAlgorithmData.keyLength),
-                      let originData = origin.data(using: .utf8),
-                      let challengeData = challenge.data(using: .utf8),
-                      let originHash = sha(hashLength: hashLength, data: originData),
-                      let challengeHash = sha(hashLength: hashLength, data: challengeData),
-                      let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
-                else {
-                    let errorMessage = "Failed to read data"
-                    finish(.failure(AuthenticateWithWebEidError.failedToHashData))
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
+                let originHash = sha(hashLength: hashLength, data: Bytes(origin.utf8))
+                let challengeHash = sha(hashLength: hashLength, data: Bytes(challenge.utf8))
+                let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
 
                 updateAlertMessage(step: 4)
                 guard let pin1 else { throw IdCardInternalError.pinVerificationFailed(codeType: .pin1) }
@@ -140,7 +126,7 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
 
                 let webEidData = WebEidData(
                     unverifiedCertificate: certBytes.base64EncodedString(),
-                    algorithm: keyAlgorithmData.algorithm,
+                    algorithm: algorithm,
                     signature: authResult.base64EncodedString(),
                     signingCertificate: signingCertificateBytes.base64EncodedString()
                 )
@@ -154,32 +140,6 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
         }
     }
 
-    public func getAlgorithmNameTypeAndLength(from key: SecKey) -> (algorithm: String, keyLength: Int)? {
-        // Get the algorithm type from the key
-        if let algorithmAttributes = SecKeyCopyAttributes(key) as? [String: Any], let algorithmType =
-            algorithmAttributes[kSecAttrKeyType as String] as? String {
-
-            // Get the algorithm name based on the type
-            var algorithmName = ""
-            var keyLength = 0
-
-            switch algorithmType {
-            case String(kSecAttrKeyTypeRSA):
-                algorithmName = rsaAlgorithmName
-                keyLength = (algorithmAttributes[kSecAttrKeySizeInBits as String] as? Int) ?? 0
-            case String(kSecAttrKeyTypeEC):
-                algorithmName = ecAlgorithmName
-                keyLength = (algorithmAttributes[kSecAttrKeySizeInBits as String] as? Int) ?? 0
-            default:
-                algorithmName = unknownAlgorithmName
-            }
-
-            return (algorithm: algorithmName, keyLength: keyLength)
-        } else {
-            return nil
-        }
-    }
-
     public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
 
     public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
@@ -187,5 +147,4 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
         self.session = nil
         finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
     }
-
 }

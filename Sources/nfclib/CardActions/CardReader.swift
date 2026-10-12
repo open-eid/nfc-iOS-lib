@@ -3,8 +3,6 @@
 
 import Foundation
 
-typealias Bytes = [UInt8]
-
 protocol CardReader: Sendable {
     /**
      * Sends an APDU (Application Protocol Data Unit) command to the smart card and retrieves the response.

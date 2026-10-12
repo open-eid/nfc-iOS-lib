@@ -3,7 +3,6 @@
 
 import OSLog
 import CoreNFC
-import CommonCrypto
 import CryptoTokenKit
 internal import SwiftECC
 internal import BigInt
@@ -308,8 +307,8 @@ class CardReaderNFC: CardReader {
     // MARK: - Utils
     // swiftlint:disable force_unwrapping
     static private func pseudoRandomNumberMappingAES(
-        sVal: any AES.DataType,
-        tVal: any AES.DataType,
+        sVal: any DataType,
+        tVal: any DataType,
         domain: Domain
     ) throws -> BInt {
         let lVal = sVal.count * 8
@@ -383,7 +382,7 @@ class CardReaderNFC: CardReader {
             Point(x3Val, (AVal * UVal).mod(pVal))
     }
 
-    static private func decryptNonce<T: AES.DataType>(CAN: String, encryptedNonce: T) throws -> Bytes {
+    static private func decryptNonce<T: DataType>(CAN: String, encryptedNonce: T) throws -> Bytes {
         let decryptionKey = KDF(key: Bytes(CAN.utf8), counter: 3)
         let cipher = AES.CBC(key: decryptionKey)
         return try cipher.decrypt(encryptedNonce)
@@ -392,14 +391,7 @@ class CardReaderNFC: CardReader {
     static private func KDF(key: Bytes, counter: UInt8) -> Bytes {
         var keydata = key + Bytes(repeating: 0x00, count: 4)
         keydata[keydata.count - 1] = counter
-        return SHA256(data: keydata)
-    }
-
-    static private func SHA256(data: Bytes) -> Bytes {
-        Bytes(unsafeUninitializedCapacity: Int(CC_SHA256_DIGEST_LENGTH)) { buffer, initializedCount in
-            CC_SHA256(data, CC_LONG(data.count), buffer.baseAddress)
-            initializedCount = Int(CC_SHA256_DIGEST_LENGTH)
-        }
+        return sha(hashLength: .bits256, data: keydata)
     }
 
     static private func random(count: Int) throws -> Data {

@@ -6,11 +6,11 @@ import Foundation
 public final class WebEidData: Sendable {
     public let unverifiedCertificate: String
     public let signingCertificate: String
-    public let algorithm: String
+    public let algorithm: WebEidSignatureAlgorithm
     public let signature: String
 
     init(unverifiedCertificate: String,
-         algorithm: String,
+         algorithm: WebEidSignatureAlgorithm,
          signature: String,
          signingCertificate: String) {
         self.unverifiedCertificate = unverifiedCertificate
@@ -24,7 +24,7 @@ public final class WebEidData: Sendable {
         ====
         unverifiedCertificate: \(unverifiedCertificate)
         ====
-        algorithm: \(algorithm)
+        algorithm: \(algorithm.rawValue)
         ====
         signature: \(signature)
         ====
