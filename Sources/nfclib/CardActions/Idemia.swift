@@ -132,25 +132,25 @@ final class Idemia: CardCommandsInternal {
 
     // MARK: - Authentication & Signing
 
-    func authenticate(for hash: Data, withPin1 pin1: SecureData) async throws -> Data {
+    func authenticate(for hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: kAIDOberthur)
         try await verifyCode(.pin1, code: pin1)
         try await setSecEnv(mode: 0xA4, algo: [0xFF, 0x20, 0x08, 0x00], keyRef: AUTHKEY)
         var paddedHash = Data(repeating: 0x00, count: max(48, hash.count) - hash.count)
-        paddedHash.append(hash)
+        paddedHash.append(contentsOf: hash)
         return try await reader.sendAPDU(ins: 0x88, data: paddedHash, leByte: 0x00)
     }
 
-    func calculateSignature(for hash: Data, withPin2 pin2: SecureData) async throws -> Data {
+    func calculateSignature(for hash: any DataType, withPin2 pin2: SecureData) async throws -> Data {
         _ = try await select(file: kAIDQSCD)
         try await verifyCode(.pin2, code: pin2)
         try await setSecEnv(mode: 0xB6, algo: [0xFF, 0x15, 0x08, 0x00], keyRef: SIGNKEY)
         var paddedHash = Data(repeating: 0x00, count: max(48, hash.count) - hash.count)
-        paddedHash.append(hash)
+        paddedHash.append(contentsOf: hash)
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, data: paddedHash, leByte: 0x00)
     }
 
-    func decryptData(_ hash: Data, withPin1 pin1: SecureData) async throws -> Data {
+    func decryptData(_ hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: kAIDOberthur)
         try await verifyCode(.pin1, code: pin1)
         try await setSecEnv(mode: 0xB8, algo: [0xFF, 0x30, 0x04, 0x00], keyRef: AUTHKEY)
