@@ -129,7 +129,7 @@ final class Thales: CardCommandsInternal {
 
     // MARK: - Authentication & Signing
 
-    private func sign(type: CodeType, pin: SecureData, keyRef: UInt8, hash: Data) async throws -> Data {
+    private func sign(type: CodeType, pin: SecureData, keyRef: UInt8, hash: any DataType) async throws -> Data {
         try await verifyCode(type, code: pin)
         try await setSecEnv(mode: 0xB6, algo: [0x24 + UInt8(hash.count)], keyRef: keyRef)
         _ = try await reader
@@ -147,12 +147,12 @@ final class Thales: CardCommandsInternal {
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, leByte: 0x00)
     }
 
-    func authenticate(for hash: Data, withPin1 pin1: SecureData) async throws -> Data {
+    func authenticate(for hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: Thales.kAID)
         return try await sign(type: .pin1, pin: pin1, keyRef: Thales.AUTHKEY, hash: hash)
     }
 
-    func calculateSignature(for hash: Data, withPin2 pin2: SecureData) async throws -> Data {
+    func calculateSignature(for hash: any DataType, withPin2 pin2: SecureData) async throws -> Data {
         let (_, pin2Changed) = try await readCodeTryCounterRecord(.pin2)
         guard pin2Changed else { throw IdCardInternalError.notActivated }
 
@@ -160,7 +160,7 @@ final class Thales: CardCommandsInternal {
         return try await sign(type: .pin2, pin: pin2, keyRef: Thales.SIGNKEY, hash: hash)
     }
 
-    func decryptData(_ hash: Data, withPin1 pin1: SecureData) async throws -> Data {
+    func decryptData(_ hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
         _ = try await select(file: Thales.kAID)
         try await verifyCode(.pin1, code: pin1)
         try await setSecEnv(mode: 0xB8, keyRef: Thales.AUTHKEY)

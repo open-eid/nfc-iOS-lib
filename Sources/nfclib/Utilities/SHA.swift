@@ -10,7 +10,7 @@ enum HashLength {
     case bits512
 }
 
-func sha(hashLength: HashLength, data: Data) -> Data {
+func sha(hashLength: HashLength, data: some DataType) -> Bytes {
     let digestLength: Int
     let hashFunction: (UnsafeRawPointer?, CC_LONG, UnsafeMutablePointer<UInt8>?) -> UnsafeMutablePointer<UInt8>?
 
@@ -26,12 +26,10 @@ func sha(hashLength: HashLength, data: Data) -> Data {
         hashFunction = CC_SHA512
     }
 
-    let hashBytes = Bytes(unsafeUninitializedCapacity: digestLength) { buffer, initializedCount in
+    return Bytes(unsafeUninitializedCapacity: digestLength) { buffer, initializedCount in
         data.withUnsafeBytes { dataBytes in
-            _ = hashFunction(dataBytes.baseAddress, CC_LONG(data.count), buffer.baseAddress)
+            _ = hashFunction(dataBytes.baseAddress, CC_LONG(dataBytes.count), buffer.baseAddress)
         }
         initializedCount = digestLength
     }
-
-    return Data(hashBytes)
 }

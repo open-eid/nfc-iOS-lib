@@ -125,7 +125,7 @@ public protocol CardCommands: Sendable {
      * - Throws: An error if the operation fails.
      * - Returns: The authentication response as `Data`.
      */
-    func authenticate(for hash: Data, withPin1 pin1: SecureData) async throws -> Data
+    func authenticate(for hash: any DataType, withPin1 pin1: SecureData) async throws -> Data
 
     /**
      * Calculates a digital signature for the given hash.
@@ -136,7 +136,7 @@ public protocol CardCommands: Sendable {
      * - Throws: An error if the operation fails.
      * - Returns: The signature as `Data`.
      */
-    func calculateSignature(for hash: Data, withPin2 pin2: SecureData) async throws -> Data
+    func calculateSignature(for hash: any DataType, withPin2 pin2: SecureData) async throws -> Data
 
     /**
      * Decrypts data using PIN 1.
@@ -147,5 +147,5 @@ public protocol CardCommands: Sendable {
      * - Throws: An error if the operation fails.
      * - Returns: The decrypted data.
      */
-    func decryptData(_ hash: Data, withPin1 pin1: SecureData) async throws -> Data
+    func decryptData(_ hash: any DataType, withPin1 pin1: SecureData) async throws -> Data
 }

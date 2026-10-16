@@ -115,8 +115,8 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                 let algorithm = try WebEidSignatureAlgorithm.forAuthenticationKey(publicKey)
                 let hashLength = algorithm.hashLength
 
-                let originHash = sha(hashLength: hashLength, data: Data(origin.utf8))
-                let challengeHash = sha(hashLength: hashLength, data: Data(challenge.utf8))
+                let originHash = sha(hashLength: hashLength, data: Bytes(origin.utf8))
+                let challengeHash = sha(hashLength: hashLength, data: Bytes(challenge.utf8))
                 let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
 
                 updateAlertMessage(step: 4)

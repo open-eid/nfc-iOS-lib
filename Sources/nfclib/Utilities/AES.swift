@@ -5,7 +5,6 @@ import CommonCrypto
 import Foundation
 
 class AES {
-    typealias DataType = DataProtocol & ContiguousBytes
     static let BlockSize: Int = kCCBlockSizeAES128
     static let Zero = Bytes(repeating: 0x00, count: BlockSize)
 
