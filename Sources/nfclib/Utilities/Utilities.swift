@@ -4,10 +4,6 @@
 import Foundation
 import Security
 
-public let rsaAlgorithmName = "RSA"
-public let ecAlgorithmName = "EC"
-public let unknownAlgorithmName = "Unknown"
-
 func convertBytesToX509Certificate(_ data: Data) throws -> SecCertificate {
     guard let certificate = SecCertificateCreateWithData(nil, data as CFData) else {
         throw CertificateConversionError.creationFailed
