@@ -14,22 +14,20 @@ extension CodeType {
 }
 
 final class Thales: CardCommandsInternal {
-    static private let ATR = Bytes(hex: "3B FF 96 00 00 80 31 FE 43 80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F 1D")
-    static private let kAID = Bytes(hex: "A0 00 00 00 63 50 4B 43 53 2D 31 35")
-    static private let kAIDGlobal = Bytes(hex: "A0 00 00 00 18 10 02 03 00 00 00 00 00 00 00 01")
+    static private let kAID: Bytes = [
+        0xA0, 0x00, 0x00, 0x00, 0x63, 0x50, 0x4B, 0x43,
+        0x53, 0x2D, 0x31, 0x35
+    ]
+    static private let kAIDGlobal: Bytes = [
+        0xA0, 0x00, 0x00, 0x00, 0x18, 0x10, 0x02, 0x03,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01
+    ]
     static private let AUTHKEY: UInt8 = 0x01
     static private let SIGNKEY: UInt8 = 0x05
 
     let canChangePUK: Bool = false
     let reader: CardReader
     let fillChar: UInt8 = 0x00
-
-    init?(reader: any CardReader, atr: Bytes) throws {
-        guard atr == Thales.ATR else {
-            return nil
-        }
-        self.reader = reader
-    }
 
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == Thales.kAIDGlobal else {
@@ -139,9 +137,7 @@ final class Thales: CardCommandsInternal {
                 p2Byte: 0xA0,
                 data: TLV(
                     tag: 0x90,
-                    value: Data(
-                        hash
-                    )
+                    bytes: hash
                 ).data
             )
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, leByte: 0x00)
@@ -165,11 +161,5 @@ final class Thales: CardCommandsInternal {
         try await verifyCode(.pin1, code: pin1)
         try await setSecEnv(mode: 0xB8, keyRef: Thales.AUTHKEY)
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x80, p2Byte: 0x86, data: [0x00] + hash, leByte: 0x00)
-    }
-}
-
-extension Bytes {
-    init(hex: String) {
-        self = hex.split(separator: " ").compactMap { UInt8($0, radix: 16) }
     }
 }

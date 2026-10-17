@@ -19,3 +19,7 @@ jobs:
         run: swift build --triple arm64-apple-ios18.0 --sdk "$(xcrun --sdk iphoneos --show-sdk-path)"
       - name: Build for iOS simulator
         run: swift build --triple arm64-apple-ios18.0-simulator --sdk "$(xcrun --sdk iphonesimulator --show-sdk-path)"
+      - name: Run tests on iOS simulator
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available --json | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          xcodebuild test -scheme IdCardLib -destination "id=$DEVICE_ID"
