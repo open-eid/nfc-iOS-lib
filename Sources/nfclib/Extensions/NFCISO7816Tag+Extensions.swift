@@ -70,8 +70,8 @@ extension SendableISO7816Tag {
         return try await sendCommand(cls: cls, ins: ins, p1Byte: p1Byte, p2Byte: p2Byte, data: data, leByte: leByte)
     }
 
-    func sendPaceCommand(records: [TKTLVRecord], tagExpected: TKTLVTag) async throws -> TKBERTLVRecord {
-        let request = TKBERTLVRecord(tag: 0x7c, records: records)
+    func sendPaceCommand(records: [TKTLVRecord], tagExpected: TKTLVTag) async throws -> TLV {
+        let request = TLV(tag: 0x7c, records: records)
         do {
             let data = try await sendCommand(
                 cls: tagExpected == 0x86 ? 0x00 : 0x10,
@@ -81,8 +81,8 @@ extension SendableISO7816Tag {
                 data: request.data,
                 leByte: 256
             )
-            if let response = TKBERTLVRecord(from: data), response.tag == 0x7c,
-               let result = TKBERTLVRecord(from: response.value), result.tag == tagExpected {
+            if let response = TLV(from: data), response.tag == 0x7c,
+               let result = TLV(from: response.value), result.tag == tagExpected {
                 return result
             } else {
                 throw IdCardInternalError.invalidResponse(message: "response conversion failed")
