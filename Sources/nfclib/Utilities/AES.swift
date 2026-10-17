@@ -18,11 +18,11 @@ class AES {
         }
 
         func encrypt<T: DataType>(_ data: T) throws -> Bytes {
-            return try crypt(data: data, operation: kCCEncrypt)
+            try crypt(data: data, operation: kCCEncrypt)
         }
 
         func decrypt<T: DataType>(_ data: T) throws -> Bytes {
-            return try crypt(data: data, operation: kCCDecrypt)
+            try crypt(data: data, operation: kCCDecrypt)
         }
 
         private func crypt<T: DataType>(data: T, operation: Int) throws -> Bytes {
@@ -51,24 +51,7 @@ class AES {
     }
 
     public class CMAC {
-        static let RBytes: Bytes = [
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x00,
-            0x87
-        ]
+        static let RBytes: Bytes = Bytes(repeating: 0x00, count: BlockSize - 1) + [0x87]
         let cipher: AES.CBC
         let k1Bytes: Bytes
         let k2Bytes: Bytes
@@ -90,7 +73,7 @@ class AES {
                     mLast = Bytes(last).addPadding() ^ k2Bytes
                 }
             } else {
-                mLast = Bytes().addPadding() ^ k1Bytes
+                mLast = Bytes().addPadding() ^ k2Bytes
             }
 
             var xVal = Bytes(repeating: 0x00, count: BlockSize)

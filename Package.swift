@@ -11,13 +11,21 @@ let package = Package(
         .library(name: "IdCardLib", targets: ["nfclib"])
     ],
     dependencies: [
-        .package(url: "https://github.com/leif-ibsen/BigInt.git", from: "1.15.0"),
+        .package(url: "https://github.com/leif-ibsen/BigInt", from: "1.15.0"),
         .package(url: "https://github.com/leif-ibsen/SwiftECC", from: "5.1.0")
     ],
     targets: [
         .target(
             name: "nfclib",
             dependencies: [
+                .product(name: "BigInt", package: "BigInt"),
+                .product(name: "SwiftECC", package: "SwiftECC")
+            ]
+        ),
+        .testTarget(
+            name: "nfclibTests",
+            dependencies: [
+                "nfclib",
                 .product(name: "BigInt", package: "BigInt"),
                 .product(name: "SwiftECC", package: "SwiftECC")
             ]
