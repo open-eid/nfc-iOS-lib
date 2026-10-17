@@ -55,8 +55,12 @@ class CardReaderNFC: CardReader {
     var ksMac: Bytes = AES.Zero
     var SSC: Bytes = AES.Zero
 
-    init(_ tag: NFCISO7816Tag, CAN: String) async throws {
-        self.tag = SendableISO7816Tag(tag: tag)
+    init(
+        _ tag: NFCISO7816Tag,
+        CAN: String,
+        invalidationError: @escaping @Sendable @MainActor () -> Error? = { nil }
+    ) async throws {
+        self.tag = SendableISO7816Tag(tag: tag, invalidationError: invalidationError)
 
         CardReaderNFC.logger.debug("Select CardAccess")
         _ = try await self.tag.sendCommand(cls: 0x00, ins: 0xA4, p1Byte: 0x02, p2Byte: 0x0C, data: Data([0x01, 0x1C]))
