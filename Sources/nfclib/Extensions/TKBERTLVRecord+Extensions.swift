@@ -4,7 +4,9 @@
 import CryptoTokenKit
 internal import SwiftECC
 
-extension TKBERTLVRecord {
+typealias TLV = TKBERTLVRecord
+
+extension TLV {
     convenience init<T: DataProtocol>(tag: TKTLVTag, bytes: T) {
         self.init(tag: tag, value: Data(bytes))
     }
