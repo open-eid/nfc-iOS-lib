@@ -15,8 +15,6 @@ protocol CardCommandsInternal: CardCommands {
 }
 
 extension CardCommandsInternal {
-    typealias TLV = TKBERTLVRecord
-
     func select(p1Byte: UInt8 = 0x04, p2Byte: UInt8 = 0x0C, file: Bytes) async throws -> Data {
         return try await reader.sendAPDU(
                 ins: 0xA4,
@@ -54,27 +52,23 @@ extension CardCommandsInternal {
     ) async throws {
         do {
             try await execute()
-        } catch let error {
-            if case let IdCardInternalError.swError(uInt16) = error {
-                switch uInt16 {
-                case 0x9000: // Success
-                    return
-                case 0x6A80:  // New pin is invalid
-                    throw IdCardInternalError.invalidNewPin
-                case 0x63C0, 0x6983: // Authentication method blocked
-                    throw IdCardInternalError.pinVerificationFailed(codeType: codeType)
-                // For pin codes this means verification failed due to wrong pin
-                case let uInt16 where (uInt16 & 0xFFF0) == 0x63C0:
-                    // Last char in trailer holds retry count
-                    throw IdCardInternalError.remainingPinRetryCount(
-                        codeType: codeType,
-                        count: Int(uInt16 & 0x000F)
-                    )
-                default:
-                    throw error
-                }
-            } else {
-                throw error
+        } catch let IdCardInternalError.swError(uInt16) {
+            switch uInt16 {
+            case 0x9000: // Success
+                return
+            case 0x6A80:  // New pin is invalid
+                throw IdCardInternalError.invalidNewPin
+            case 0x63C0, 0x6983: // Authentication method blocked
+                throw IdCardInternalError.pinVerificationFailed(codeType: codeType)
+            // For pin codes this means verification failed due to wrong pin
+            case let uInt16 where (uInt16 & 0xFFF0) == 0x63C0:
+                // Last char in trailer holds retry count
+                throw IdCardInternalError.remainingPinRetryCount(
+                    codeType: codeType,
+                    count: Int(uInt16 & 0x000F)
+                )
+            default:
+                throw IdCardInternalError.swError(uInt16)
             }
         }
     }
@@ -137,10 +131,10 @@ extension CardCommandsInternal {
     func setSecEnv(mode: UInt8, algo: Bytes? = nil, keyRef: UInt8) async throws {
         var algoData: Data = Data()
         if let algoValue = algo {
-            algoData =  TLV(tag: 0x80, value: Data(algoValue)).data
+            algoData =  TLV(tag: 0x80, bytes: algoValue).data
         }
 
         _ = try await reader.sendAPDU(ins: 0x22, p1Byte: 0x41, p2Byte: mode,
-                                data: algoData + TLV(tag: 0x84, value: Data([keyRef])).data)
+                                data: algoData + TLV(tag: 0x84, bytes: [keyRef]).data)
     }
 }
