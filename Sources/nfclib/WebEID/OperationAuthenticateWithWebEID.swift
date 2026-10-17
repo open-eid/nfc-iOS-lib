@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later
 
 import Foundation
-import CoreNFC
 import Security
 
 public enum AuthenticateWithWebEidError: Error {
@@ -14,41 +13,65 @@ public enum AuthenticateWithWebEidError: Error {
 }
 
 @MainActor
-public class OperationAuthenticateWithWebEID: NSObject {
-    private let CAN: String
-    private var pin1: SecureData?
-    private let challenge: String
-    private let origin: String
-    private let connection = NFCConnection()
+public class OperationAuthenticateWithWebEID {
+    public init() {}
 
-    private var session: NFCTagReaderSession?
-    private var continuation: CheckedContinuation<WebEidData, Error>?
+    public func startReading(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData {
+        try await NFCConnection.run(onError: Self.failure) { connection in
+            let cardCommands = try await connection.connect(
+                CAN: CAN,
+                message: alertMessage(step: 0),
+                detectedMessage: alertMessage(step: 2)
+            )
+            connection.message(alertMessage(step: 3))
+            let certBytes = try await cardCommands.readAuthenticationCertificate()
+            let authCertificate = try convertBytesToX509Certificate(certBytes)
 
-    public init(CAN: String, pin1: SecureData, challenge: String, origin: String) {
-        self.CAN = CAN
-        self.pin1 = pin1
-        self.challenge = challenge
-        self.origin = origin
-    }
-
-    public func startReading() async throws -> WebEidData {
-        return try await withCheckedThrowingContinuation { continuation in
-            guard self.continuation == nil else {
-                continuation.resume(throwing: IdCardInternalError.operationInProgress)
-                return
+            let (notBefore, notAfter) = try validateCertificateStructure(authCertificate)
+            guard Date() >= notBefore else {
+                throw AuthenticateWithWebEidError.failedCertificateNotYetValid
             }
-            self.continuation = continuation
-            guard NFCTagReaderSession.readingAvailable else {
-                self.finish(.failure(IdCardInternalError.nfcNotSupported))
-                return
+            guard Date() <= notAfter else {
+                throw AuthenticateWithWebEidError.failedCertificateExpired
             }
-            session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
-            updateAlertMessage(step: 0)
-            session?.begin()
+            guard let publicKey = SecCertificateCopyKey(authCertificate) else {
+                throw AuthenticateWithWebEidError.failedToReadPublicKey
+            }
+
+            let algorithm = try WebEidSignatureAlgorithm.forAuthenticationKey(publicKey)
+            let hashLength = algorithm.hashLength
+
+            let originHash = sha(hashLength: hashLength, data: Bytes(origin.utf8))
+            let challengeHash = sha(hashLength: hashLength, data: Bytes(challenge.utf8))
+            let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
+
+            connection.message(alertMessage(step: 4))
+            try Task.checkCancellation()
+            let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
+            let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
+
+            return WebEidData(
+                unverifiedCertificate: certBytes.base64EncodedString(),
+                algorithm: algorithm,
+                signature: authResult.base64EncodedString(),
+                signingCertificate: signingCertificateBytes.base64EncodedString()
+            )
         }
     }
 
-    private func updateAlertMessage(step: Int) {
+    private static func failure(_ error: Error) -> (error: Error, message: String) {
+        let message = switch error {
+        case AuthenticateWithWebEidError.failedCertificateNotYetValid:
+            "Certificate not yet valid"
+        case AuthenticateWithWebEidError.failedCertificateExpired:
+            "Certificate has expired"
+        default:
+            "Failed to read data"
+        }
+        return (error, message)
+    }
+
+    private func alertMessage(step: Int) -> String {
         let stepMessages = [
             "Please place your ID card against the smart device",
             "Hold your ID card against your smart device until the data is read",
@@ -57,94 +80,7 @@ public class OperationAuthenticateWithWebEID: NSObject {
         ]
 
         let stepMessage = stepMessages[min(step, stepMessages.count - 1)]
-
         let progressBar = ProgressBar(currentStep: step)
-
-        var message = stepMessage
-
-        message += "\n\n\(progressBar.generate())"
-
-        session?.alertMessage = message
-    }
-
-    private func finish(_ result: Result<WebEidData, Error>) {
-        guard let continuation else { return }
-        self.continuation = nil
-        pin1 = nil
-        continuation.resume(with: result)
-    }
-}
-
-extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegate {
-    public func tagReaderSession(_ session: NFCTagReaderSession, didDetect tags: [NFCTag]) {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                updateAlertMessage(step: 1)
-                let tag = try await connection.setup(session, tags: tags)
-                updateAlertMessage(step: 2)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
-
-                updateAlertMessage(step: 3)
-                let certBytes = try await cardCommands.readAuthenticationCertificate()
-                let authCertificate = try convertBytesToX509Certificate(certBytes)
-
-                let (notBefore, notAfter) = try validateCertificateStructure(authCertificate)
-
-                guard Date() >= notBefore else {
-                    let errorMessage = "Certificate not yet valid"
-                    finish(.failure(AuthenticateWithWebEidError.failedCertificateNotYetValid))
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
-
-                guard Date() <= notAfter else {
-                    let errorMessage = "Certificate has expired"
-                    finish(.failure(AuthenticateWithWebEidError.failedCertificateExpired))
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
-
-                guard let publicKey = SecCertificateCopyKey(authCertificate) else {
-                    let errorMessage = "Failed to read data"
-                    finish(.failure(AuthenticateWithWebEidError.failedToReadPublicKey))
-                    session.invalidate(errorMessage: errorMessage)
-                    return
-                }
-
-                let algorithm = try WebEidSignatureAlgorithm.forAuthenticationKey(publicKey)
-                let hashLength = algorithm.hashLength
-
-                let originHash = sha(hashLength: hashLength, data: Bytes(origin.utf8))
-                let challengeHash = sha(hashLength: hashLength, data: Bytes(challenge.utf8))
-                let webEidHash = sha(hashLength: hashLength, data: originHash + challengeHash)
-
-                updateAlertMessage(step: 4)
-                guard let pin1 else { throw IdCardInternalError.pinVerificationFailed(codeType: .pin1) }
-                let authResult = try await cardCommands.authenticate(for: webEidHash, withPin1: pin1)
-                let signingCertificateBytes = try await cardCommands.readSignatureCertificate()
-
-                let webEidData = WebEidData(
-                    unverifiedCertificate: certBytes.base64EncodedString(),
-                    algorithm: algorithm,
-                    signature: authResult.base64EncodedString(),
-                    signingCertificate: signingCertificateBytes.base64EncodedString()
-                )
-                finish(.success(webEidData))
-                session.alertMessage = "Data read"
-                session.invalidate()
-            } catch {
-                finish(.failure(error))
-                session.invalidate(errorMessage: "Failed to read data")
-            }
-        }
-    }
-
-    public func tagReaderSessionDidBecomeActive(_: NFCTagReaderSession) { }
-
-    public func tagReaderSession(_ session: NFCTagReaderSession, didInvalidateWithError error: Error) {
-        guard session === self.session else { return }
-        self.session = nil
-        finish(.failure(IdCardInternalError.mapSessionInvalidation(error)))
+        return "\(stepMessage)\n\n\(progressBar.generate())"
     }
 }
