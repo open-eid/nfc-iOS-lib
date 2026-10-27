@@ -17,6 +17,8 @@ The NFC-ID library is not intended for public use. It is a low-level technical l
 
 The NFC-ID library was originally developed within the m-valimiste project, based on the need to use the ID card inside the m-Voting client application.  
 
+Currently supports Estonian eID cards. Please submit an issue if you want to request support for your country's eID card.
+
 # Demo Application Run Guide
 - Open **mvoting-nfc/nfc-demo.xcodeproj**. The demo app uses the Swift package at the repository root.
 - Wait until **Swift Package Manager** dependencies are fully downloaded.  
