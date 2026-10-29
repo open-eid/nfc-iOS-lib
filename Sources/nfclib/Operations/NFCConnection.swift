@@ -41,11 +41,46 @@ public class NFCConnection {
         return tag
     }
 
+    /**
+     * Detect the card by ATS historical bytes and return the matching implementation.
+     *
+     * - Parameters:
+     *   - tag: The connected ISO 7816 tag.
+     *   - CAN: The card access number printed on the card.
+     *   - allowedCardTypes: required restriction on accepted card types. Use
+     *     ``CardType/allCards`` to opt in to every supported card type.
+     * - Throws: ``IdCardInternalError/cardNotSupported`` if the ATS is unknown, or the detected
+     *   card type is not in `allowedCardTypes`.
+     */
     @MainActor
-    public func getCardCommands(_: NFCTagReaderSession, tag: NFCISO7816Tag, CAN: String) async throws -> CardCommands {
-        let initialSelectedAID = tag.initialSelectedAID
+    public func getCardCommands(
+        _: NFCTagReaderSession,
+        tag: NFCISO7816Tag,
+        CAN: String,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws -> CardCommands {
+        if let historicalBytes = tag.historicalBytes {
+            guard let detectedCardType = CardType(historicalBytes: historicalBytes),
+                  allowedCardTypes.contains(detectedCardType) else {
+                throw IdCardInternalError.cardNotSupported
+            }
+            let reader = try await CardReaderNFC(tag, CAN: CAN)
+            switch detectedCardType {
+            case .latviaIdemia: return LatviaIdemia(reader: reader)
+            case .id1, .thales: return try await cardCommandsBySelectedAID(reader: reader, tag: tag)
+            }
+        }
+
         let reader = try await CardReaderNFC(tag, CAN: CAN)
-        guard let aid = Bytes(hex: initialSelectedAID) else {
+        let commands = try await cardCommandsBySelectedAID(reader: reader, tag: tag)
+        guard allowedCardTypes.contains(commands.cardType) else {
+            throw IdCardInternalError.cardNotSupported
+        }
+        return commands
+    }
+
+    private func cardCommandsBySelectedAID(reader: CardReader, tag: NFCISO7816Tag) async throws -> CardCommands {
+        guard let aid = Bytes(hex: tag.initialSelectedAID) else {
             throw IdCardInternalError.connectionFailed
         }
 
@@ -69,4 +104,3 @@ public class NFCConnection {
         throw IdCardInternalError.cardNotSupported
     }
 }
-

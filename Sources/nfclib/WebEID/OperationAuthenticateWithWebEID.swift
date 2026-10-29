@@ -21,15 +21,23 @@ public class OperationAuthenticateWithWebEID: NSObject {
     private let challenge: String
     private let origin: String
     private let connection = NFCConnection()
+    private let allowedCardTypes: Set<CardType>
 
     private var session: NFCTagReaderSession?
     private var continuation: CheckedContinuation<WebEidData, Error>?
 
-    public init(CAN: String, pin1: SecureData, challenge: String, origin: String) {
+    public init(
+        CAN: String,
+        pin1: SecureData,
+        challenge: String,
+        origin: String,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) {
         self.CAN = CAN
         self.pin1 = pin1
         self.challenge = challenge
         self.origin = origin
+        self.allowedCardTypes = allowedCardTypes
     }
 
     public func startReading() async throws -> WebEidData {
@@ -84,7 +92,8 @@ extension OperationAuthenticateWithWebEID: @MainActor NFCTagReaderSessionDelegat
                 updateAlertMessage(step: 1)
                 let tag = try await connection.setup(session, tags: tags)
                 updateAlertMessage(step: 2)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                let cardCommands = try await connection.getCardCommands(
+                    session, tag: tag, CAN: CAN, allowedCardTypes: allowedCardTypes)
 
                 updateAlertMessage(step: 3)
                 let certBytes = try await cardCommands.readAuthenticationCertificate()

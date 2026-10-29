@@ -31,8 +31,13 @@ public class OperationReadCertificate: NSObject {
     private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<SecCertificate, Error>?
+    private var allowedCardTypes: Set<CardType> = CardType.estonianCards
 
-    public func startReading(CAN: String, certUsage: CertificateUsage) async throws -> SecCertificate {
+    public func startReading(
+        CAN: String,
+        certUsage: CertificateUsage,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws -> SecCertificate {
 
         return try await withCheckedThrowingContinuation { continuation in
             guard self.continuation == nil else {
@@ -48,6 +53,7 @@ public class OperationReadCertificate: NSObject {
 
             self.CAN = CAN
             self.certUsage = certUsage
+            self.allowedCardTypes = allowedCardTypes
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             session?.alertMessage = nfcMessage
             session?.begin()
@@ -72,7 +78,8 @@ extension OperationReadCertificate: @MainActor NFCTagReaderSessionDelegate {
             do {
                 session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await connection.setup(session, tags: tags)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                let cardCommands = try await connection.getCardCommands(
+                    session, tag: tag, CAN: CAN, allowedCardTypes: allowedCardTypes)
                 do {
                     switch certUsage {
                     case .auth:

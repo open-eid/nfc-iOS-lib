@@ -8,7 +8,9 @@ public enum IdCardError: Error {
          wrongPIN(codeType: CodeType, triesLeft: Int),
          invalidNewPIN,
          sessionError,
-         notActivated
+         notActivated,
+         /// Exception when id card is not supported.
+         cardNotSupported
 }
 
 public enum IdCardInternalError: Error {
@@ -59,7 +61,6 @@ public enum IdCardInternalError: Error {
                 .notSupportedCodeType,
                 .authenticationFailed,
                 .invalidTag,
-                .cardNotSupported,
                 .nfcNotSupported,
                 .connectionFailed,
                 .multipleTagsDetected,
@@ -73,6 +74,8 @@ public enum IdCardInternalError: Error {
             return .sessionError
         case .notActivated:
             return .notActivated
+        case .cardNotSupported:
+            return .cardNotSupported
         case .canAuthenticationFailed:
             return .wrongCAN
         case .pinVerificationFailed(let codeType):

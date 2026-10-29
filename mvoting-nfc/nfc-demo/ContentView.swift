@@ -20,7 +20,12 @@ struct ContentView: View {
     @State private var pin2: SecureData = SecureData([0x00])
     @State private var puk: SecureData = SecureData([0x00])
     @State private var selectedMethod: HashMethod = .sha254
+    @State private var allowLatvianCards: Bool = false
     let methods = HashMethod.allCases
+
+    private var allowedCardTypes: Set<CardType> {
+        allowLatvianCards ? CardType.allCards : CardType.estonianCards
+    }
 
     var body: some View {
         ScrollView {
@@ -70,6 +75,9 @@ struct ContentView: View {
                 .padding()
             }
             .padding()
+            Toggle("Accept Latvian ID cards", isOn: $allowLatvianCards)
+                .padding(.horizontal)
+
             Text("Available operations")
                 .font(.system(size: 30))
             VStack(spacing: 40) {
@@ -78,7 +86,7 @@ struct ContentView: View {
                         return
                     }
                     Task {
-                        await viewModel.readPublicInfo(can: can)
+                        await viewModel.readPublicInfo(can: can, allowedCardTypes: allowedCardTypes)
                     }
                 }
 
@@ -87,7 +95,7 @@ struct ContentView: View {
                         return
                     }
                     Task {
-                        await viewModel.readAuthenticationCertificate(can: can)
+                        await viewModel.readAuthenticationCertificate(can: can, allowedCardTypes: allowedCardTypes)
                     }
                 }
 
@@ -96,7 +104,7 @@ struct ContentView: View {
                         return
                     }
                     Task {
-                        await viewModel.readSigningCertificate(can: can)
+                        await viewModel.readSigningCertificate(can: can, allowedCardTypes: allowedCardTypes)
                     }
                 }
 
@@ -108,7 +116,7 @@ struct ContentView: View {
                         return
                     }
                     Task {
-                        await viewModel.authenticate(can: can, pin1: pin1, challenge: challenge, origin: origin)
+                        await viewModel.authenticate(can: can, pin1: pin1, challenge: challenge, origin: origin, allowedCardTypes: allowedCardTypes)
                     }
                 }
 
@@ -118,7 +126,7 @@ struct ContentView: View {
                         return
                     }
                     Task {
-                        await viewModel.sign(can: can, pin2: pin2)
+                        await viewModel.sign(can: can, pin2: pin2, allowedCardTypes: allowedCardTypes)
                     }
                 }
                 Button("Unblock PIN1") {
@@ -127,7 +135,7 @@ struct ContentView: View {
                           pin1.count >= 4
                     else { return }
                     Task {
-                        await viewModel.unblockPin1(can: can, puk: puk, newCode: pin1)
+                        await viewModel.unblockPin1(can: can, puk: puk, newCode: pin1, allowedCardTypes: allowedCardTypes)
                     }
                 }
                 Button("Unblock PIN2") {
@@ -136,7 +144,7 @@ struct ContentView: View {
                           pin2.count >= 5
                     else { return }
                     Task {
-                        await viewModel.unblockPin2(can: can, puk: puk, newCode: pin2)
+                        await viewModel.unblockPin2(can: can, puk: puk, newCode: pin2, allowedCardTypes: allowedCardTypes)
                     }
                 }
             }
@@ -144,7 +152,13 @@ struct ContentView: View {
             .padding()
 
             VStack(spacing: 20) {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .textSelection(.enabled)
+                }
                 Text("Card data")
+                Text(viewModel.cardInfo.map { "Card: \($0.cardType.rawValue)" } ?? "")
                 Text(viewModel.cardInfo?.formattedDescription ?? "")
                     .textSelection(.enabled)
                 Text("Web-eid data")
@@ -231,6 +245,23 @@ extension ContentView {
         var signingResult: String?
         var hashedData: Data?
         var hashedDataString: String?
+        var errorMessage: String?
+
+        private func report(_ error: Error) {
+            guard let idCardError = error as? IdCardError else {
+                errorMessage = "Failed: \(error)"
+                return
+            }
+            switch idCardError {
+            case .cardNotSupported: errorMessage = "Card not supported"
+            case .wrongCAN: errorMessage = "Wrong CAN"
+            case .wrongPIN(let codeType, let triesLeft):
+                errorMessage = "Wrong \(codeType.name), \(triesLeft) tries left"
+            case .invalidNewPIN: errorMessage = "New PIN rejected by the card"
+            case .notActivated: errorMessage = "Card not activated"
+            case .sessionError: errorMessage = "Session failed"
+            }
+        }
 
         func computeHash(_ selectedMethod: HashMethod, _ dataToHashString: String) {
             guard let dataToHash = dataToHashString.data(using: .utf8) else { return }
@@ -246,75 +277,88 @@ extension ContentView {
             hashedData = data
         }
 
-        func readPublicInfo(can: String) async {
+        func readPublicInfo(can: String, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                let cardInfo = try await cardOperator.readPublicInfo(CAN: can)
+                let cardInfo = try await cardOperator.readPublicInfo(
+                    CAN: can, allowedCardTypes: allowedCardTypes)
                 self.cardInfo = cardInfo
-
             } catch {
-
+                report(error)
             }
         }
 
-        func readAuthenticationCertificate(can: String) async {
+        func readAuthenticationCertificate(can: String, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                let cert = try await cardOperator.readAuthenticationCertificate(CAN: can)
+                let cert = try await cardOperator.readAuthenticationCertificate(
+                    CAN: can, allowedCardTypes: allowedCardTypes)
                 guard let certSummary = SecCertificateCopySubjectSummary(cert) as? String else {
                     self.authCert = "Failed!"
                     return
                 }
                 self.authCert = "summary: \(certSummary)"
             } catch {
-                // Handle error here
+                report(error)
             }
         }
 
-        func readSigningCertificate(can: String) async {
+        func readSigningCertificate(can: String, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                let cert = try await cardOperator.readSigningCertificate(CAN: can)
+                let cert = try await cardOperator.readSigningCertificate(
+                    CAN: can, allowedCardTypes: allowedCardTypes)
                 guard let certSummary = SecCertificateCopySubjectSummary(cert) as? String else {
                     self.signingCert = "Failed!"
                     return
                 }
                 self.signingCert = "summary: \(certSummary)"
             } catch {
-                // Handle error here
+                report(error)
             }
         }
 
-        func sign(can: String, pin2: SecureData) async {
+        func sign(can: String, pin2: SecureData, allowedCardTypes: Set<CardType>) async {
             guard let data = hashedData else { return }
+            errorMessage = nil
             do {
-                let signResult = try await cardOperator.sign(CAN: can, hash: data, pin2: pin2)
-                let stringResult = signResult.hexStr
-                self.signingResult = stringResult
+                let signResult = try await cardOperator.sign(
+                    CAN: can, hash: data, pin2: pin2, allowedCardTypes: allowedCardTypes)
+                self.signingResult = signResult.hexStr
             } catch {
-                // Handle error here
+                report(error)
             }
         }
 
-        func authenticate(can: String, pin1: SecureData, challenge: String, origin: String) async {
+        func authenticate(can: String, pin1: SecureData, challenge: String, origin: String, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                let webEidResult = try await cardOperator.loadWebEIDAuthenticationData(CAN: can, pin1: pin1, challenge: challenge, origin: origin)
+                let webEidResult = try await cardOperator.loadWebEIDAuthenticationData(
+                    CAN: can, pin1: pin1, challenge: challenge, origin: origin,
+                    allowedCardTypes: allowedCardTypes)
                 self.webEidData = webEidResult
             } catch {
-                // Handle error here
+                report(error)
             }
         }
 
-        func unblockPin1(can: String, puk: SecureData, newCode: SecureData) async {
+        func unblockPin1(can: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                try await cardOperator.unblockPin1(CAN: can, puk: puk, newCode: newCode)
+                try await cardOperator.unblockPin1(
+                    CAN: can, puk: puk, newCode: newCode, allowedCardTypes: allowedCardTypes)
             } catch {
-                // Handle error here
+                report(error)
             }
         }
 
-        func unblockPin2(can: String, puk: SecureData, newCode: SecureData) async {
+        func unblockPin2(can: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async {
+            errorMessage = nil
             do {
-                try await cardOperator.unblockPin2(CAN: can, puk: puk, newCode: newCode)
+                try await cardOperator.unblockPin2(
+                    CAN: can, puk: puk, newCode: newCode, allowedCardTypes: allowedCardTypes)
             } catch {
-                // Handle error here
+                report(error)
             }
         }
     }

@@ -51,6 +51,15 @@ public extension CodeType {
  */
 public protocol CardCommands: Sendable {
     var canChangePUK: Bool { get }
+
+    /**
+     * Identifies the card model this instance talks to.
+     *
+     * Compile-time constant per implementation — reading it performs no card I/O, so callers
+     * can branch on it without first calling `readPublicData()`.
+     */
+    var cardType: CardType { get }
+
     /**
      * Reads public data from the card.
      *

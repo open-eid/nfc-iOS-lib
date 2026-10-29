@@ -9,11 +9,22 @@ struct CardInfoView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text("Card: \(cardInfo.cardType.rawValue)")
             Text("Given Name: \(cardInfo.givenName)")
             Text("Surname: \(cardInfo.surname)")
             Text("Personal Code: \(cardInfo.personalCode)")
-            Text("Citizenship: \(cardInfo.citizenship)")
-            Text("Date of Expiry: \(cardInfo.dateOfExpiry)")
+            if !cardInfo.citizenship.isEmpty {
+                Text("Citizenship: \(cardInfo.citizenship)")
+            }
+            if !cardInfo.issuingCountry.isEmpty {
+                Text("Issuing Country: \(cardInfo.issuingCountry)")
+            }
+            if !cardInfo.dateOfExpiry.isEmpty {
+                Text("Date of Expiry: \(cardInfo.dateOfExpiry)")
+            }
+            if let certificateExpiryDate = cardInfo.certificateExpiryDate {
+                Text("Certificate Expiry: \(certificateExpiryDate.formatted(date: .numeric, time: .omitted))")
+            }
         }
         .padding()
     }

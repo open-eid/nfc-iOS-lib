@@ -19,8 +19,15 @@ public class OperationUnblockPin: NSObject {
     private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<Void, Error>?
+    private var allowedCardTypes: Set<CardType> = CardType.estonianCards
 
-    public func startReading(CAN: String, codeType: CodeType, puk: SecureData, newPin: SecureData) async throws {
+    public func startReading(
+        CAN: String,
+        codeType: CodeType,
+        puk: SecureData,
+        newPin: SecureData,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws {
 
         return try await withCheckedThrowingContinuation { continuation in
             guard self.continuation == nil else {
@@ -38,6 +45,7 @@ public class OperationUnblockPin: NSObject {
             self.codeType = codeType
             self.puk = puk
             self.newPin = newPin
+            self.allowedCardTypes = allowedCardTypes
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             session?.alertMessage = nfcMessage
             session?.begin()
@@ -65,7 +73,8 @@ extension OperationUnblockPin: @MainActor NFCTagReaderSessionDelegate {
             do {
                 session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await self.connection.setup(session, tags: tags)
-                let cardCommands = try await self.connection.getCardCommands(session, tag: tag, CAN: self.CAN)
+                let cardCommands = try await self.connection.getCardCommands(
+                    session, tag: tag, CAN: self.CAN, allowedCardTypes: self.allowedCardTypes)
                 try await cardCommands.unblockCode(codeType, puk: puk, newCode: newPin)
 
                 finish(.success(()))

@@ -13,8 +13,14 @@ public class OperationSignHash: NSObject {
     private let nfcMessage: String = "Please place your ID card against the smart device"
     private var continuation: CheckedContinuation<Data, Error>?
     private var connection = NFCConnection()
+    private var allowedCardTypes: Set<CardType> = CardType.estonianCards
 
-    public func startSigning(CAN: String, PIN2: SecureData, hash: Data) async throws -> Data {
+    public func startSigning(
+        CAN: String,
+        PIN2: SecureData,
+        hash: Data,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws -> Data {
 
         return try await withCheckedThrowingContinuation { continuation in
             guard self.continuation == nil else {
@@ -30,6 +36,7 @@ public class OperationSignHash: NSObject {
             self.CAN = CAN
             self.PIN = PIN2
             self.hashToSign = hash
+            self.allowedCardTypes = allowedCardTypes
 
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             updateAlertMessage(step: 0)
@@ -72,7 +79,8 @@ extension OperationSignHash: @MainActor NFCTagReaderSessionDelegate {
                 let pin2 = PIN
                 let tag = try await connection.setup(session, tags: tags)
                 updateAlertMessage(step: 2)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                let cardCommands = try await connection.getCardCommands(
+                    session, tag: tag, CAN: CAN, allowedCardTypes: allowedCardTypes)
                 updateAlertMessage(step: 3)
                 let signatureValue = try await cardCommands.calculateSignature(for: hashToSign, withPin2: pin2)
                 finish(.success(signatureValue))

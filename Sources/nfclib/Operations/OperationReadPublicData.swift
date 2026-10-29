@@ -10,8 +10,12 @@ import CoreNFC
     private let nfcMessage: String = "Please place your ID card against the smart device"
     private let connection = NFCConnection()
     private var continuation: CheckedContinuation<CardInfo, Error>?
+    private var allowedCardTypes: Set<CardType> = CardType.estonianCards
 
-    public func startReading(CAN: String) async throws -> CardInfo {
+    public func startReading(
+        CAN: String,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws -> CardInfo {
         return try await withCheckedThrowingContinuation { continuation in
             guard self.continuation == nil else {
                 continuation.resume(throwing: IdCardInternalError.operationInProgress)
@@ -25,6 +29,7 @@ import CoreNFC
             }
 
             self.CAN = CAN
+            self.allowedCardTypes = allowedCardTypes
             session = NFCTagReaderSession(pollingOption: .iso14443, delegate: self, queue: DispatchQueue.main)
             session?.alertMessage = nfcMessage
             session?.begin()
@@ -44,7 +49,8 @@ extension OperationReadPublicData: @MainActor NFCTagReaderSessionDelegate {
             do {
                 session.alertMessage = "Hold your ID card against your smart device until the data is read"
                 let tag = try await connection.setup(session, tags: tags)
-                let cardCommands = try await connection.getCardCommands(session, tag: tag, CAN: CAN)
+                let cardCommands = try await connection.getCardCommands(
+                    session, tag: tag, CAN: CAN, allowedCardTypes: allowedCardTypes)
                 let cardInfo = try await cardCommands.readPublicData()
 
                 finish(.success(cardInfo))

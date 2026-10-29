@@ -7,10 +7,22 @@ public struct CardInfo: Sendable, Hashable {
     public var givenName: String
     public var surname: String
     public var personalCode: String
+    /// Cardholder's citizenship as held in the on-card personal-data file. Empty for cards that
+    /// do not expose it over NFC — the Latvian card, where ``issuingCountry`` is read instead.
     public var citizenship: String
     public var documentNumber: String
+    /// Expiry date of the physical document, as printed on the card. Empty for cards that do not
+    /// expose it over NFC — the Latvian card, where ``certificateExpiryDate`` is read instead.
     public var dateOfExpiry: String
     public var dateAndPlaceOfBirth: String
+    /// ISO 3166-1 alpha-2 country code of the certificate issuer (subject RDN `C`). This is the
+    /// issuing country, *not* the cardholder's citizenship: a foreign resident's card still
+    /// carries the issuer's code. Empty for cards whose personal data is read from EF files.
+    public var issuingCountry: String
+    /// `notAfter` of the on-card authentication certificate. Typically shorter than the document
+    /// expiry. Set only for cards whose personal data comes from the certificate.
+    public var certificateExpiryDate: Date?
+    public var cardType: CardType
 
     public init(
         givenName: String = "",
@@ -19,7 +31,10 @@ public struct CardInfo: Sendable, Hashable {
         citizenship: String = "",
         documentNumber: String = "",
         dateOfExpiry: String = "",
-        dateAndPlaceOfBirth: String = ""
+        dateAndPlaceOfBirth: String = "",
+        issuingCountry: String = "",
+        certificateExpiryDate: Date? = nil,
+        cardType: CardType = .thales
     ) {
         self.givenName = givenName
         self.surname = surname
@@ -28,51 +43,51 @@ public struct CardInfo: Sendable, Hashable {
         self.documentNumber = documentNumber
         self.dateOfExpiry = dateOfExpiry
         self.dateAndPlaceOfBirth = dateAndPlaceOfBirth
+        self.issuingCountry = issuingCountry
+        self.certificateExpiryDate = certificateExpiryDate
+        self.cardType = cardType
     }
 
-    public var dateOfBirth: Date? { CardInfo.dateOfBirth(fromPersonalCode: personalCode) }
+    public var dateOfBirth: Date? {
+        switch cardType {
+        case .latviaIdemia: return PersonalCodeParser.latvianDateOfBirth(personalCode)
+        case .id1, .thales: return PersonalCodeParser.estonianDateOfBirth(personalCode)
+        }
+    }
 
     public static func dateOfBirth(fromPersonalCode personalCode: String) -> Date? {
-        let digits = Array(personalCode)
-        guard digits.count >= 7, digits.prefix(7).allSatisfy(\.isWholeNumber) else { return nil }
+        PersonalCodeParser.estonianDateOfBirth(personalCode)
+    }
 
-        let century: Int
-        switch digits[0].wholeNumberValue {
-        case 1, 2: century = 1800
-        case 3, 4: century = 1900
-        case 5, 6: century = 2000
-        case 7, 8: century = 2100
-        default: return nil
-        }
-
-        guard let yearInCentury = Int(String(digits[1...2])),
-              let month = Int(String(digits[3...4])),
-              let day = Int(String(digits[5...6])) else { return nil }
-
-        var components = DateComponents()
-        components.year = century + yearInCentury
-        components.month = month
-        components.day = day
-
-        let calendar = Calendar(identifier: .gregorian)
-        guard let date = calendar.date(from: components) else { return nil }
-
-        let rounded = calendar.dateComponents([.year, .month, .day], from: date)
-        guard rounded.year == components.year,
-              rounded.month == month,
-              rounded.day == day else { return nil }
-        return date
+    public static func dateOfBirth(fromLatvianPersonalCode personalCode: String) -> Date? {
+        PersonalCodeParser.latvianDateOfBirth(personalCode)
     }
 
     public var formattedDescription: String {
-        """
+        var description = """
         Name: \(givenName) \(surname)
         Personal Code: \(personalCode)
         Citizenship: \(citizenship)
         Document number: \(documentNumber)
         Date of Expiry: \(dateOfExpiry)
         """
+        if !issuingCountry.isEmpty {
+            description += "\nIssuing Country: \(issuingCountry)"
+        }
+        if let certificateExpiryDate {
+            description += "\nCertificate Expiry: \(CardInfo.dateFormatter.string(from: certificateExpiryDate))"
+        }
+        return description
     }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd.MM.yyyy"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        return formatter
+    }()
 }
 
 public enum CardField: Int, Sendable {
