@@ -3,11 +3,18 @@
 
 import Foundation
 
-private let ATR = Bytes(hex: "3B DB 96 00 80 B1 FE 45 1F 83 00 12 23 3F 53 65 49 44 0F 90 00 F1")
-private let ATRv2 = Bytes(hex: "3B DC 96 00 80 B1 FE 45 1F 83 00 12 23 3F 54 65 49 44 32 0F 90 00 C3")
-private let kAID = Bytes(hex: "A0 00 00 00 77 01 08 00 07 00 00 FE 00 00 01 00")
-private let kAIDQSCD = Bytes(hex: "51 53 43 44 20 41 70 70 6C 69 63 61 74 69 6F 6E")
-private let kAIDOberthur = Bytes(hex: "E8 28 BD 08 0F F2 50 4F 54 20 41 57 50")
+private let kAID: Bytes = [
+    0xA0, 0x00, 0x00, 0x00, 0x77, 0x01, 0x08, 0x00,
+    0x07, 0x00, 0x00, 0xFE, 0x00, 0x00, 0x01, 0x00
+]
+private let kAIDQSCD: Bytes = [
+    0x51, 0x53, 0x43, 0x44, 0x20, 0x41, 0x70, 0x70,
+    0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E
+]
+private let kAIDOberthur: Bytes = [
+    0xE8, 0x28, 0xBD, 0x08, 0x0F, 0xF2, 0x50, 0x4F,
+    0x54, 0x20, 0x41, 0x57, 0x50
+]
 private let AUTHKEY: UInt8 = 0x81
 private let SIGNKEY: UInt8 = 0x9F
 
@@ -32,13 +39,6 @@ final class Idemia: CardCommandsInternal {
     let canChangePUK: Bool = true
     let reader: CardReader
     let fillChar: UInt8 = 0xFF
-
-    required init?(reader: CardReader, atr: Bytes) {
-        guard atr == ATR || atr == ATRv2 else {
-            return nil
-        }
-        self.reader = reader
-    }
 
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == kAID else {

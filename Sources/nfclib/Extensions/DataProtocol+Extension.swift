@@ -30,27 +30,25 @@ extension DataProtocol where Self.Index == Int {
 
 extension DataProtocol where Self.Index == Int, Self: MutableDataProtocol {
     init?(hex: String) {
-        guard hex.count.isMultiple(of: 2) else { return nil }
-        let chars = hex.map { $0 }
-        let bytes = stride(from: 0, to: chars.count, by: 2)
-            .map { String(chars[$0]) + String(chars[$0 + 1]) }
-            .compactMap { UInt8($0, radix: 16) }
-        guard hex.count / bytes.count == 2 else { return nil }
-        self.init(bytes)
+        self.init()
+        reserveCapacity(hex.utf8.count / 2)
+        var high: UInt8?
+        for char in hex where char != " " {
+            guard let value = char.hexDigitValue.map(UInt8.init) else { return nil }
+            if let highValue = high {
+                append(highValue << 4 | value)
+                high = nil
+            } else {
+                high = value
+            }
+        }
+        guard high == nil else { return nil }
     }
 
     func addPadding() -> Self {
         var padding = Self(repeating: 0x00, count: AES.BlockSize - count % AES.BlockSize)
         padding[0] = 0x80
         return self + padding
-    }
-
-    public static func ^ (xVal: Self, yVal: Self) -> Self {
-        var result = xVal
-        for index in 0..<result.count {
-            result[index] ^= yVal[index]
-        }
-        return result
     }
 
     static func ^ <D: Collection>(lhs: Self, rhs: D) -> Self where D.Element == Self.Element {
@@ -66,7 +64,7 @@ extension DataProtocol where Self.Index == Int, Self: MutableDataProtocol {
         var index = endIndex
         while index != startIndex {
             formIndex(before: &index)
-            self[index] += 1
+            self[index] &+= 1
             if self[index] != 0 {
                 break
             }
