@@ -33,3 +33,9 @@ func validateCertificateStructure(_ certificate: SecCertificate) throws -> (notB
     }
     return (notBefore, notAfter)
 }
+
+extension UInt16 {
+    init(_ p1Byte: UInt8, _ p2Byte: UInt8) {
+        self = (UInt16(p1Byte) << 8) | UInt16(p2Byte)
+    }
+}
