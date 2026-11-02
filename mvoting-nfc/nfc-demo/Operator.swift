@@ -24,11 +24,10 @@ extension Operator: CardOperations {
         do {
             let result = try await OperationReadPublicData().startReading(CAN: CAN)
             return result
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
     
@@ -36,11 +35,10 @@ extension Operator: CardOperations {
         do {
             let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .auth)
             return cert
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
 
@@ -48,23 +46,21 @@ extension Operator: CardOperations {
         do {
             let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .sign)
             return cert
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
 
     public func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData {
         do {
-            let webEidData = try await OperationAuthenticateWithWebEID(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin).startReading()
+            let webEidData = try await OperationAuthenticateWithWebEID().startReading(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin)
             return webEidData
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
     
@@ -72,33 +68,30 @@ extension Operator: CardOperations {
         do {
             let signature = try await OperationSignHash().startSigning(CAN: CAN, PIN2: pin2, hash: hash)
             return signature
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
 
     public func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData) async throws {
         do {
             try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode)
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
 
     public func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData) async throws {
         do {
             try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode)
+        } catch let error as IdCardInternalError {
+            throw error.getIdCardError()
         } catch {
-            guard let e = error as? IdCardInternalError else {
-                throw IdCardError.sessionError
-            }
-            throw e.getIdCardError()
+            throw IdCardError.sessionError
         }
     }
 }

@@ -8,6 +8,8 @@ import CryptoTokenKit
 @MainActor
 struct SendableISO7816Tag {
     var tag: NFCISO7816Tag
+    /// Why the reader session ended, if it has. Reported instead of the transceive error it causes.
+    var invalidationError: @Sendable @MainActor () -> Error? = { nil }
 }
 
 extension SendableISO7816Tag {
@@ -28,14 +30,19 @@ extension SendableISO7816Tag {
             data: data,
             expectedResponseLength: leByte
         )
-        let result: (Data, UInt8, UInt8) = try await withCheckedThrowingContinuation { continuation in
-            tag.sendCommand(apdu: apdu) { responseData, sw1, sw2, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                } else {
-                    continuation.resume(returning: (responseData, sw1, sw2))
+        let result: (Data, UInt8, UInt8)
+        do {
+            result = try await withCheckedThrowingContinuation { continuation in
+                tag.sendCommand(apdu: apdu) { responseData, sw1, sw2, error in
+                    if let error {
+                        continuation.resume(throwing: error)
+                    } else {
+                        continuation.resume(returning: (responseData, sw1, sw2))
+                    }
                 }
             }
+        } catch {
+            throw invalidationError() ?? error
         }
         switch result {
         case (_, 0x63, 0x00):
