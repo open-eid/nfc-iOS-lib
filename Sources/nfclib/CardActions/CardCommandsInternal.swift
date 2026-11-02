@@ -31,7 +31,12 @@ extension CardCommandsInternal {
         var size = 0xE5
         if let fci = TLV(from: try await select(p1Byte: p1Byte, p2Byte: 0x04, file: file)) {
             for record in TLV.sequenceOfRecords(from: fci.value) ?? [] where record.tag == 0x80 || record.tag == 0x81 {
-                size = Int(record.value[0]) << 8 | Int(record.value[1])
+                let sizeBytes = Bytes(record.value)
+                switch sizeBytes.count {
+                case 1: size = Int(sizeBytes[0])
+                case 2: size = Int(sizeBytes[0]) << 8 | Int(sizeBytes[1])
+                default: continue
+                }
             }
         }
         var data = Data()
