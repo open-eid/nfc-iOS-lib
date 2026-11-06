@@ -26,8 +26,8 @@ extension CardType {
     private static let knownHistoricalBytes: [(bytes: Bytes, cardType: CardType)] = [
         (Bytes(hex: "00 12 23 3F 53 65 49 44 0F 90 00"), .idemiaEstonia),
         (Bytes(hex: "00 12 23 3F 54 65 49 44 32 0F 90 00"), .idemiaEstonia),
-        // Android lists only D8; this repo's Thales ATR carries B8 in the same position. Both
-        // are kept until a real tap settles it — matching neither would reject every Thales card.
+        // Two Thales variants differ only in the third byte. Both are kept until a real tap
+        // settles which one ships — matching neither would reject every Thales card.
         (Bytes(hex: "80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thalesEstonia),
         (Bytes(hex: "80 31 D8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thalesEstonia),
         (Bytes(hex: "00 12 42 8F 53 65 49 44 0F 90 00"), .idemiaLatvia),

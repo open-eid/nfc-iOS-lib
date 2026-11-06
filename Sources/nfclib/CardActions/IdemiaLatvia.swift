@@ -7,15 +7,12 @@ import Foundation
  * Latvian eID card NFC token.
  *
  * Built on the same IDEMIA chip as the Estonian card, so PACE, secure messaging, and PIN
- * operations come from ``Idemia``. Overrides personal-data and certificate reads, and uses
- * different key references for authentication and signing.
+ * operations come from ``Idemia``. Overrides the personal-data read and uses different key
+ * references for authentication and signing.
  */
 final class IdemiaLatvia: Idemia {
     private static let personalCodeDF: Bytes = [0x50, 0x00]
     private static let personalCodeEF: Bytes = [0x50, 0x01]
-    private static let authenticationCertificatePath: Bytes = [0xAD, 0xF1, 0x34, 0x01]
-    private static let signatureCertificatePath: Bytes = [0xAD, 0xF2, 0x34, 0x1F]
-    private static let maximumFileSize = 0x8000
 
     let canChangePUK: Bool = true
     let reader: CardReader
@@ -35,6 +32,8 @@ final class IdemiaLatvia: Idemia {
     let authAlgorithm: Bytes = [0x04]
     let signAlgorithm: Bytes = [0x54]
     let decryptAlgorithm: Bytes = [0x04]
+    let authCertFile: Bytes = [0xAD, 0xF1, 0x34, 0x01]
+    let signCertFile: Bytes = [0xAD, 0xF2, 0x34, 0x1F]
 
     init(reader: CardReader) {
         self.reader = reader
@@ -76,14 +75,6 @@ final class IdemiaLatvia: Idemia {
         )
     }
 
-    func readAuthenticationCertificate() async throws -> Data {
-        try await readCertificate(path: IdemiaLatvia.authenticationCertificatePath)
-    }
-
-    func readSignatureCertificate() async throws -> Data {
-        try await readCertificate(path: IdemiaLatvia.signatureCertificatePath)
-    }
-
     // MARK: - Reads
 
     private func readPersonalCode() async throws -> String {
@@ -104,31 +95,5 @@ final class IdemiaLatvia: Idemia {
             throw IdCardInternalError.failedReadingField(.personalCode)
         }
         return trimmedCode
-    }
-
-    private func readCertificate(path: Bytes) async throws -> Data {
-        _ = try await select(file: IdemiaAID.main)
-        _ = try await select(p1Byte: 0x09, file: path)
-
-        var data = Data()
-        while data.count < IdemiaLatvia.maximumFileSize {
-            let chunk: Data
-            do {
-                chunk = try await reader.sendAPDU(
-                    ins: 0xB0,
-                    p1Byte: UInt8(data.count >> 8),
-                    p2Byte: UInt8(truncatingIfNeeded: data.count),
-                    leByte: 0x00
-                )
-            } catch IdCardInternalError.swError(0x6B00) where !data.isEmpty {
-                return data
-            }
-            guard !chunk.isEmpty else {
-                throw IdCardInternalError.invalidResponse(
-                    message: "Card returned no certificate data at offset \(data.count)")
-            }
-            data.append(chunk)
-        }
-        throw IdCardInternalError.invalidResponse(message: "Certificate file exceeds addressable size")
     }
 }

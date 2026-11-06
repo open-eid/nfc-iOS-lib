@@ -3,9 +3,6 @@
 
 import Foundation
 
-private let ATR = Bytes(hex: "3B DB 96 00 80 B1 FE 45 1F 83 00 12 23 3F 53 65 49 44 0F 90 00 F1")
-private let ATRv2 = Bytes(hex: "3B DC 96 00 80 B1 FE 45 1F 83 00 12 23 3F 54 65 49 44 32 0F 90 00 C3")
-
 final class IdemiaEstonia: Idemia {
     let canChangePUK: Bool = true
     let reader: CardReader
@@ -17,13 +14,8 @@ final class IdemiaEstonia: Idemia {
     let authAlgorithm: Bytes = [0xFF, 0x20, 0x08, 0x00]
     let signAlgorithm: Bytes = [0xFF, 0x15, 0x08, 0x00]
     let decryptAlgorithm: Bytes = [0xFF, 0x30, 0x04, 0x00]
-
-    init?(reader: CardReader, atr: Bytes) {
-        guard atr == ATR || atr == ATRv2 else {
-            return nil
-        }
-        self.reader = reader
-    }
+    let authCertFile: Bytes = [0xAD, 0xF1, 0x34, 0x01]
+    let signCertFile: Bytes = [0xAD, 0xF2, 0x34, 0x1F]
 
     init?(reader: CardReader, aid: Bytes) {
         guard aid == IdemiaAID.main else {
@@ -64,15 +56,5 @@ final class IdemiaEstonia: Idemia {
             }
         }
         return personalData
-    }
-
-    func readAuthenticationCertificate() async throws -> Data {
-        _ = try await select(file: IdemiaAID.main)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF1, 0x34, 0x01])
-    }
-
-    func readSignatureCertificate() async throws -> Data {
-        _ = try await select(file: IdemiaAID.main)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF2, 0x34, 0x1F])
     }
 }

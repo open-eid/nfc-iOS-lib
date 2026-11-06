@@ -9,21 +9,50 @@ enum IdemiaAID {
     static let oberthur = Bytes(hex: "E8 28 BD 08 0F F2 50 4F 54 20 41 57 50")
 }
 
+extension CodeType {
+    fileprivate var aid: Bytes {
+        switch self {
+        case .pin1: return IdemiaAID.main
+        case .pin2: return IdemiaAID.qscd
+        case .puk: return IdemiaAID.main
+        }
+    }
+    fileprivate var pinRef: UInt8 {
+        switch self {
+        case .pin1: return 0x01
+        case .pin2: return 0x85
+        case .puk: return 0x02
+        }
+    }
+}
+
 protocol Idemia: CardCommandsInternal {
     var authKeyRef: UInt8 { get }
     var signKeyRef: UInt8 { get }
     var authAlgorithm: Bytes { get }
     var signAlgorithm: Bytes { get }
     var decryptAlgorithm: Bytes { get }
+    var authCertFile: Bytes { get }
+    var signCertFile: Bytes { get }
 }
 
 extension Idemia {
 
+    // MARK: - Certificates
+
+    func readAuthenticationCertificate() async throws -> Data {
+        try await readCertificate(file: authCertFile)
+    }
+
+    func readSignatureCertificate() async throws -> Data {
+        try await readCertificate(file: signCertFile)
+    }
+
     // MARK: - PIN & PUK Management
 
     func readCodeTryCounterRecord(_ type: CodeType) async throws -> (retryCount: UInt8, pinActive: Bool) {
-        _ = try await select(file: aid(for: type))
-        let ref = pinRef(for: type) & ~0x80
+        _ = try await select(file: type.aid)
+        let ref = type.pinRef & ~0x80
         let data = try await reader.sendAPDU(ins: 0xCB, p1Byte: 0x3F, p2Byte: 0xFF, data:
             [0x4D, 0x08, 0x70, 0x06, 0xBF, 0x81, ref, 0x02, 0xA0, 0x80], leByte: 0x00)
         if let info = TLV(from: data), info.tag == 0x70,
@@ -40,12 +69,12 @@ extension Idemia {
     }
 
     func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
-        _ = try await select(file: aid(for: type))
-        try await changeCode(pinRef(for: type), codeType: type, to: code, verifyCode: verifyCode)
+        _ = try await select(file: type.aid)
+        try await changeCode(type.pinRef, codeType: type, to: code, verifyCode: verifyCode)
     }
 
     func verifyCode(_ type: CodeType, code: SecureData) async throws {
-        try await verifyCode(pinRef(for: type), codeType: type, code: code)
+        try await verifyCode(type.pinRef, codeType: type, code: code)
     }
 
     func unblockCode(_ type: CodeType, puk: SecureData, newCode: SecureData) async throws {
@@ -54,9 +83,9 @@ extension Idemia {
         }
         try await verifyCode(.puk, code: puk)
         if type == .pin2 {
-            _ = try await select(file: IdemiaAID.qscd)
+            _ = try await select(file: type.aid)
         }
-        try await unblockCode(pinRef(for: type), codeType: type, puk: nil, newCode: newCode)
+        try await unblockCode(type.pinRef, codeType: type, puk: nil, newCode: newCode)
     }
 
     // MARK: - Authentication & Signing
@@ -85,19 +114,9 @@ extension Idemia {
 
     // MARK: - Helpers
 
-    private func aid(for type: CodeType) -> Bytes {
-        switch type {
-        case .pin1, .puk: return IdemiaAID.main
-        case .pin2: return IdemiaAID.qscd
-        }
-    }
-
-    private func pinRef(for type: CodeType) -> UInt8 {
-        switch type {
-        case .pin1: return 0x01
-        case .pin2: return 0x85
-        case .puk: return 0x02
-        }
+    private func readCertificate(file: Bytes) async throws -> Data {
+        _ = try await select(file: IdemiaAID.main)
+        return try await readFile(p1Byte: 0x09, file: file)
     }
 
     /**
