@@ -17,7 +17,7 @@ The NFC-ID library is not intended for public use. It is a low-level technical l
 
 The NFC-ID library was originally developed within the m-valimiste project, based on the need to use the ID card inside the m-Voting client application.  
 
-Currently supports Estonian eID cards. Please submit an issue if you want to request support for your country's eID card.
+Currently supports Estonian and Latvian eID cards. Please submit an issue if you want to request support for your country's eID card.
 
 # Demo Application Run Guide
 - Open **mvoting-nfc/nfc-demo.xcodeproj**. The demo app uses the Swift package at the repository root.
@@ -66,38 +66,51 @@ public func isNFCSupported() -> Bool
 
 Asynchronously reads public information about the cardholder from the card:
 ```swift
-public func readPublicInfo(CAN: String) async throws -> CardInfo
+public func readPublicInfo(CAN: String, allowedCardTypes: Set<CardType>) async throws -> CardInfo
 ```
 
 Asynchronously reads the authentication certificate from the card:
 ```swift
-public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
+public func readAuthenticationCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate
 ```
 
 Asynchronously reads the signing certificate from the card:
 ```swift
-public func readSigningCertificate(CAN: String) async throws -> SecCertificate
+public func readSigningCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate
 ```
 
 Retrieves data required for WebEID authentication, using the provided credentials and challenge:
 ```swift
-public func loadWebEIDAuthenticationData(CAN: String, pin1: String, challenge: String, origin: String) async throws -> WebEidData
+public func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String, allowedCardTypes: Set<CardType>) async throws -> WebEidData
 ```
 
 Performs a signing operation using a precomputed hash (only SHA-384 supported) and the PIN2 code:
 ```swift
-public func sign(CAN: String, hash: Data, pin2: String) async throws -> Data
+public func sign(CAN: String, hash: Data, pin2: SecureData, allowedCardTypes: Set<CardType>) async throws -> Data
 ```
 
 Unblocks PIN1 using the PUK code and sets a new PIN:
 ```swift
-public func unblockPin1(CAN: String, puk: String, newCode: String) async throws
+public func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws
 ```
 
 Unblocks PIN2 using the PUK code and sets a new PIN:
 ```swift
-public func unblockPin2(CAN: String, puk: String, newCode: String) async throws
+public func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws
 ```
+
+Every operation takes an `allowedCardTypes` set, defaulting to `CardType.estonianCards`
+(`[.id1, .thales]`). Pass `CardType.allCards` to also accept Latvian cards:
+
+```swift
+let cardInfo = try await OperationReadPublicData().startReading(
+    CAN: can,
+    allowedCardTypes: CardType.allCards
+)
+```
+
+A card whose type is excluded, or whose ATS the library does not recognise, fails with
+`IdCardError.cardNotSupported`.
 
 # Logging
 

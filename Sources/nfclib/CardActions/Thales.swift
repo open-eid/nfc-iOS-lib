@@ -14,7 +14,6 @@ extension CodeType {
 }
 
 final class Thales: CardCommandsInternal {
-    static private let ATR = Bytes(hex: "3B FF 96 00 00 80 31 FE 43 80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F 1D")
     static private let kAID = Bytes(hex: "A0 00 00 00 63 50 4B 43 53 2D 31 35")
     static private let kAIDGlobal = Bytes(hex: "A0 00 00 00 18 10 02 03 00 00 00 00 00 00 00 01")
     static private let AUTHKEY: UInt8 = 0x01
@@ -23,13 +22,7 @@ final class Thales: CardCommandsInternal {
     let canChangePUK: Bool = false
     let reader: CardReader
     let fillChar: UInt8 = 0x00
-
-    init?(reader: any CardReader, atr: Bytes) throws {
-        guard atr == Thales.ATR else {
-            return nil
-        }
-        self.reader = reader
-    }
+    let cardType: CardType = .thalesEstonia
 
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == Thales.kAIDGlobal else {
@@ -54,7 +47,7 @@ final class Thales: CardCommandsInternal {
     func readPublicData() async throws -> CardInfo {
         _ = try await select(file: Thales.kAID)
         _ = try await select(p1Byte: 0x08, file: [0xDF, 0xDD])
-        var personalData = CardInfo()
+        var personalData = CardInfo(cardType: cardType)
         for recordNr: UInt8 in 1...8 {
             let data = try await readFile(p1Byte: 0x02, file: [0x50, recordNr])
             let record = String(data: Data(data), encoding: .utf8) ?? "-"
