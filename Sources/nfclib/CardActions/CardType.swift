@@ -4,9 +4,9 @@
 import Foundation
 
 public enum CardType: String, Sendable, CaseIterable {
-    case id1
-    case thales
-    case latviaIdemia
+    case idemiaEstonia
+    case thalesEstonia
+    case idemiaLatvia
 }
 
 public extension CardType {
@@ -17,21 +17,21 @@ public extension CardType {
      * so a future release of this library adding a country variant cannot silently widen the set
      * of cards that the integrator's app accepts.
      */
-    static let estonianCards: Set<CardType> = [.id1, .thales]
+    static let estonianCards: Set<CardType> = [.idemiaEstonia, .thalesEstonia]
 
     static let allCards: Set<CardType> = Set(CardType.allCases)
 }
 
 extension CardType {
     private static let knownHistoricalBytes: [(bytes: Bytes, cardType: CardType)] = [
-        (Bytes(hex: "00 12 23 3F 53 65 49 44 0F 90 00"), .id1),
-        (Bytes(hex: "00 12 23 3F 54 65 49 44 32 0F 90 00"), .id1),
+        (Bytes(hex: "00 12 23 3F 53 65 49 44 0F 90 00"), .idemiaEstonia),
+        (Bytes(hex: "00 12 23 3F 54 65 49 44 32 0F 90 00"), .idemiaEstonia),
         // Android lists only D8; this repo's Thales ATR carries B8 in the same position. Both
         // are kept until a real tap settles it — matching neither would reject every Thales card.
-        (Bytes(hex: "80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thales),
-        (Bytes(hex: "80 31 D8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thales),
-        (Bytes(hex: "00 12 42 8F 53 65 49 44 0F 90 00"), .latviaIdemia),
-        (Bytes(hex: "00 12 42 8F 54 65 49 44 32 0F 90 00"), .latviaIdemia)
+        (Bytes(hex: "80 31 B8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thalesEstonia),
+        (Bytes(hex: "80 31 D8 53 65 49 44 64 B0 85 05 10 12 23 3F"), .thalesEstonia),
+        (Bytes(hex: "00 12 42 8F 53 65 49 44 0F 90 00"), .idemiaLatvia),
+        (Bytes(hex: "00 12 42 8F 54 65 49 44 32 0F 90 00"), .idemiaLatvia)
     ]
 
     init?(historicalBytes: Data?) {

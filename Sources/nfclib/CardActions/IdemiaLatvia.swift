@@ -7,10 +7,10 @@ import Foundation
  * Latvian eID card NFC token.
  *
  * Built on the same IDEMIA chip as the Estonian card, so PACE, secure messaging, and PIN
- * operations come from ``IdemiaCard``. Overrides personal-data and certificate reads, and uses
+ * operations come from ``Idemia``. Overrides personal-data and certificate reads, and uses
  * different key references for authentication and signing.
  */
-final class LatviaIdemia: IdemiaCard {
+final class IdemiaLatvia: Idemia {
     private static let personalCodeDF: Bytes = [0x50, 0x00]
     private static let personalCodeEF: Bytes = [0x50, 0x01]
     private static let authenticationCertificatePath: Bytes = [0xAD, 0xF1, 0x34, 0x01]
@@ -20,14 +20,15 @@ final class LatviaIdemia: IdemiaCard {
     let canChangePUK: Bool = true
     let reader: CardReader
     let fillChar: UInt8 = 0xFF
-    let cardType: CardType = .latviaIdemia
+    let cardType: CardType = .idemiaLatvia
 
     let authKeyRef: UInt8 = 0x82
     let signKeyRef: UInt8 = 0x9E
 
     /**
-     * LV uses 1-byte algorithm identifiers in the MSE algorithm-reference DO, vs the 4-byte
-     * `FF xx xx xx` form used by Estonian IDEMIA:
+     * Algorithm references for the MSE algorithm-reference DO, sent as a single byte here where
+     * the Estonian profile is sent the 4-byte `FF xx xx xx` form. That is what each profile is
+     * known to accept, not a documented country rule:
      * - `0x04` — ECC auth / decrypt
      * - `0x54` — ECC sign
      */
@@ -76,11 +77,11 @@ final class LatviaIdemia: IdemiaCard {
     }
 
     func readAuthenticationCertificate() async throws -> Data {
-        try await readCertificate(path: LatviaIdemia.authenticationCertificatePath)
+        try await readCertificate(path: IdemiaLatvia.authenticationCertificatePath)
     }
 
     func readSignatureCertificate() async throws -> Data {
-        try await readCertificate(path: LatviaIdemia.signatureCertificatePath)
+        try await readCertificate(path: IdemiaLatvia.signatureCertificatePath)
     }
 
     // MARK: - Reads
@@ -88,8 +89,8 @@ final class LatviaIdemia: IdemiaCard {
     private func readPersonalCode() async throws -> String {
         // Read personal code from EF 0x5001
         _ = try await select(file: IdemiaAID.main)
-        _ = try await select(p1Byte: 0x01, file: LatviaIdemia.personalCodeDF)
-        _ = try await select(p1Byte: 0x02, file: LatviaIdemia.personalCodeEF)
+        _ = try await select(p1Byte: 0x01, file: IdemiaLatvia.personalCodeDF)
+        _ = try await select(p1Byte: 0x02, file: IdemiaLatvia.personalCodeEF)
         let record = try await reader.sendAPDU(ins: 0xB0, leByte: 0x00)
 
         // Strip trailing 0xFF (CardOS unused-space marker on fixed-size EFs) before UTF-8
@@ -105,16 +106,12 @@ final class LatviaIdemia: IdemiaCard {
         return trimmedCode
     }
 
-    /**
-     * Read a certificate from the currently selected path. Selecting with P2 = 0x0C returns no
-     * file size, so the read runs until the card reports the offset is past the end of the file.
-     */
     private func readCertificate(path: Bytes) async throws -> Data {
         _ = try await select(file: IdemiaAID.main)
         _ = try await select(p1Byte: 0x09, file: path)
 
         var data = Data()
-        while data.count < LatviaIdemia.maximumFileSize {
+        while data.count < IdemiaLatvia.maximumFileSize {
             let chunk: Data
             do {
                 chunk = try await reader.sendAPDU(

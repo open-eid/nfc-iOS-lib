@@ -3,76 +3,114 @@
 
 import Foundation
 
-private let ATR = Bytes(hex: "3B DB 96 00 80 B1 FE 45 1F 83 00 12 23 3F 53 65 49 44 0F 90 00 F1")
-private let ATRv2 = Bytes(hex: "3B DC 96 00 80 B1 FE 45 1F 83 00 12 23 3F 54 65 49 44 32 0F 90 00 C3")
+enum IdemiaAID {
+    static let main = Bytes(hex: "A0 00 00 00 77 01 08 00 07 00 00 FE 00 00 01 00")
+    static let qscd = Bytes(hex: "51 53 43 44 20 41 70 70 6C 69 63 61 74 69 6F 6E")
+    static let oberthur = Bytes(hex: "E8 28 BD 08 0F F2 50 4F 54 20 41 57 50")
+}
 
-final class Idemia: IdemiaCard {
-    let canChangePUK: Bool = true
-    let reader: CardReader
-    let fillChar: UInt8 = 0xFF
-    let cardType: CardType = .id1
+protocol Idemia: CardCommandsInternal {
+    var authKeyRef: UInt8 { get }
+    var signKeyRef: UInt8 { get }
+    var authAlgorithm: Bytes { get }
+    var signAlgorithm: Bytes { get }
+    var decryptAlgorithm: Bytes { get }
+}
 
-    let authKeyRef: UInt8 = 0x81
-    let signKeyRef: UInt8 = 0x9F
-    let authAlgorithm: Bytes = [0xFF, 0x20, 0x08, 0x00]
-    let signAlgorithm: Bytes = [0xFF, 0x15, 0x08, 0x00]
-    let decryptAlgorithm: Bytes = [0xFF, 0x30, 0x04, 0x00]
+extension Idemia {
 
-    init?(reader: CardReader, atr: Bytes) {
-        guard atr == ATR || atr == ATRv2 else {
-            return nil
-        }
-        self.reader = reader
-    }
+    // MARK: - PIN & PUK Management
 
-    init?(reader: CardReader, aid: Bytes) {
-        guard aid == IdemiaAID.main else {
-            return nil
-        }
-        self.reader = reader
-    }
-
-    init?(reader: CardReader, selectAID: Bool) async {
-        self.reader = reader
-        if (selectAID) {
-            do {
-                _ = try await select(file: IdemiaAID.main)
-            } catch {
-                return nil
+    func readCodeTryCounterRecord(_ type: CodeType) async throws -> (retryCount: UInt8, pinActive: Bool) {
+        _ = try await select(file: aid(for: type))
+        let ref = pinRef(for: type) & ~0x80
+        let data = try await reader.sendAPDU(ins: 0xCB, p1Byte: 0x3F, p2Byte: 0xFF, data:
+            [0x4D, 0x08, 0x70, 0x06, 0xBF, 0x81, ref, 0x02, 0xA0, 0x80], leByte: 0x00)
+        if let info = TLV(from: data), info.tag == 0x70,
+           let tag = TLV(from: info.value), tag.tag == 0xBF8100 | UInt32(ref),
+           let a0Value = TLV(from: tag.value), a0Value.tag == 0xA0,
+           let records = TLV.sequenceOfRecords(from: a0Value.value) {
+            for record in records where record.tag == 0x9B {
+                guard let counter = record.value.first else { continue }
+                return (counter, true)
             }
         }
+        throw IdCardInternalError.invalidResponse(
+            message: "Missing PIN counter record for \(cardType.rawValue)")
     }
 
-    // MARK: - Public Data
+    func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
+        _ = try await select(file: aid(for: type))
+        try await changeCode(pinRef(for: type), codeType: type, to: code, verifyCode: verifyCode)
+    }
 
-    func readPublicData() async throws -> CardInfo {
-        _ = try await select(file: IdemiaAID.main)
-        _ = try await select(p1Byte: 0x01, file: [0x50, 0x00])
-        var personalData = CardInfo(cardType: cardType)
-        for recordNr: UInt8 in 1...8 {
-            let data = try await readFile(p1Byte: 0x02, file: [0x50, recordNr])
-            let record = String(data: data, encoding: .utf8) ?? "-"
-            switch recordNr {
-            case 1: personalData.surname = record
-            case 2: personalData.givenName = record
-            case 4: personalData.citizenship = !record.isEmpty ? record : "-"
-            case 5: personalData.dateAndPlaceOfBirth = record
-            case 6: personalData.personalCode = record
-            case 7: personalData.documentNumber = record
-            case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
-            default: break
-            }
+    func verifyCode(_ type: CodeType, code: SecureData) async throws {
+        try await verifyCode(pinRef(for: type), codeType: type, code: code)
+    }
+
+    func unblockCode(_ type: CodeType, puk: SecureData, newCode: SecureData) async throws {
+        guard type != .puk else {
+            throw IdCardInternalError.notSupportedCodeType
         }
-        return personalData
+        // PUK is associated with the MAIN AID context, so VERIFY PUK must run there. Make this
+        // self-contained instead of relying on the caller leaving MAIN active — otherwise calls
+        // composed after readCodeTryCounterRecord(.pin2)/calculateSignature would silently fail
+        // with a "wrong PUK" error.
+        _ = try await select(file: IdemiaAID.main)
+        try await verifyCode(.puk, code: puk)
+        if type == .pin2 {
+            _ = try await select(file: IdemiaAID.qscd)
+        }
+        try await unblockCode(pinRef(for: type), codeType: type, puk: nil, newCode: newCode)
     }
 
-    func readAuthenticationCertificate() async throws -> Data {
-        _ = try await select(file: IdemiaAID.main)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF1, 0x34, 0x01])
+    // MARK: - Authentication & Signing
+
+    func authenticate(for hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
+        _ = try await select(file: IdemiaAID.oberthur)
+        try await verifyCode(.pin1, code: pin1)
+        try await setSecEnv(mode: 0xA4, algo: authAlgorithm, keyRef: authKeyRef)
+        return try await reader.sendAPDU(ins: 0x88, data: padWithZeroes(hash), leByte: 0x00)
     }
 
-    func readSignatureCertificate() async throws -> Data {
-        _ = try await select(file: IdemiaAID.main)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF2, 0x34, 0x1F])
+    func calculateSignature(for hash: any DataType, withPin2 pin2: SecureData) async throws -> Data {
+        _ = try await select(file: IdemiaAID.qscd)
+        try await verifyCode(.pin2, code: pin2)
+        try await setSecEnv(mode: 0xB6, algo: signAlgorithm, keyRef: signKeyRef)
+        return try await reader.sendAPDU(
+            ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, data: padWithZeroes(hash), leByte: 0x00)
+    }
+
+    func decryptData(_ hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
+        _ = try await select(file: IdemiaAID.oberthur)
+        try await verifyCode(.pin1, code: pin1)
+        try await setSecEnv(mode: 0xB8, algo: decryptAlgorithm, keyRef: authKeyRef)
+        return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x80, p2Byte: 0x86, data: [0x00] + hash, leByte: 0x00)
+    }
+
+    // MARK: - Helpers
+
+    private func aid(for type: CodeType) -> Bytes {
+        switch type {
+        case .pin1, .puk: return IdemiaAID.main
+        case .pin2: return IdemiaAID.qscd
+        }
+    }
+
+    private func pinRef(for type: CodeType) -> UInt8 {
+        switch type {
+        case .pin1: return 0x01
+        case .pin2: return 0x85
+        case .puk: return 0x02
+        }
+    }
+
+    /**
+     * @return zero padded hash with 48 byte length or same hash if it's longer than 48 bytes.
+     */
+    private func padWithZeroes(_ hash: any DataType) -> Data {
+        var padded = Data(repeating: 0x00, count: max(0, 48 - hash.count))
+        padded.append(contentsOf: hash)
+        return padded
     }
 }

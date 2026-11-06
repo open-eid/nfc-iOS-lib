@@ -34,7 +34,7 @@ public struct CardInfo: Sendable, Hashable {
         dateAndPlaceOfBirth: String = "",
         issuingCountry: String = "",
         certificateExpiryDate: Date? = nil,
-        cardType: CardType = .thales
+        cardType: CardType = .thalesEstonia
     ) {
         self.givenName = givenName
         self.surname = surname
@@ -50,8 +50,8 @@ public struct CardInfo: Sendable, Hashable {
 
     public var dateOfBirth: Date? {
         switch cardType {
-        case .latviaIdemia: return PersonalCodeParser.latvianDateOfBirth(personalCode)
-        case .id1, .thales: return PersonalCodeParser.estonianDateOfBirth(personalCode)
+        case .idemiaLatvia: return PersonalCodeParser.latvianDateOfBirth(personalCode)
+        case .idemiaEstonia, .thalesEstonia: return PersonalCodeParser.estonianDateOfBirth(personalCode)
         }
     }
 

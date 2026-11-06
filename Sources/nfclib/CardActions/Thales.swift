@@ -23,7 +23,7 @@ final class Thales: CardCommandsInternal {
     let canChangePUK: Bool = false
     let reader: CardReader
     let fillChar: UInt8 = 0x00
-    let cardType: CardType = .thales
+    let cardType: CardType = .thalesEstonia
 
     init?(reader: any CardReader, atr: Bytes) throws {
         guard atr == Thales.ATR else {

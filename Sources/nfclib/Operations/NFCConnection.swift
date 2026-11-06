@@ -66,8 +66,8 @@ public class NFCConnection {
             }
             let reader = try await CardReaderNFC(tag, CAN: CAN)
             switch detectedCardType {
-            case .latviaIdemia: return LatviaIdemia(reader: reader)
-            case .id1, .thales: return try await cardCommandsBySelectedAID(reader: reader, tag: tag)
+            case .idemiaLatvia: return IdemiaLatvia(reader: reader)
+            case .idemiaEstonia, .thalesEstonia: return try await cardCommandsBySelectedAID(reader: reader, tag: tag)
             }
         }
 
@@ -84,16 +84,16 @@ public class NFCConnection {
             throw IdCardInternalError.connectionFailed
         }
 
-        // Try Idemia with explicit AID
-        if let cmd = Idemia(reader: reader, aid: aid) {
+        // Try IdemiaEstonia with explicit AID
+        if let cmd = IdemiaEstonia(reader: reader, aid: aid) {
             return cmd
         }
         // Try Thales with explicit AID
         if let cmd = Thales(reader: reader, aid: aid) {
             return cmd
         }
-        // Try Idemia selecting AID
-        if let cmd = await Idemia(reader: reader, selectAID: true) {
+        // Try IdemiaEstonia selecting AID
+        if let cmd = await IdemiaEstonia(reader: reader, selectAID: true) {
             return cmd
         }
         // Try Thales selecting AID
