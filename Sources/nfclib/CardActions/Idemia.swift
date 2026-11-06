@@ -52,11 +52,6 @@ extension Idemia {
         guard type != .puk else {
             throw IdCardInternalError.notSupportedCodeType
         }
-        // PUK is associated with the MAIN AID context, so VERIFY PUK must run there. Make this
-        // self-contained instead of relying on the caller leaving MAIN active — otherwise calls
-        // composed after readCodeTryCounterRecord(.pin2)/calculateSignature would silently fail
-        // with a "wrong PUK" error.
-        _ = try await select(file: IdemiaAID.main)
         try await verifyCode(.puk, code: puk)
         if type == .pin2 {
             _ = try await select(file: IdemiaAID.qscd)
