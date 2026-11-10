@@ -3,27 +3,27 @@
 
 import Foundation
 
-private let kAID: Bytes = [
-    0xA0, 0x00, 0x00, 0x00, 0x77, 0x01, 0x08, 0x00,
-    0x07, 0x00, 0x00, 0xFE, 0x00, 0x00, 0x01, 0x00
-]
-private let kAIDQSCD: Bytes = [
-    0x51, 0x53, 0x43, 0x44, 0x20, 0x41, 0x70, 0x70,
-    0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E
-]
-private let kAIDOberthur: Bytes = [
-    0xE8, 0x28, 0xBD, 0x08, 0x0F, 0xF2, 0x50, 0x4F,
-    0x54, 0x20, 0x41, 0x57, 0x50
-]
-private let AUTHKEY: UInt8 = 0x81
-private let SIGNKEY: UInt8 = 0x9F
+enum IdemiaAID {
+    static let main: Bytes = [
+        0xA0, 0x00, 0x00, 0x00, 0x77, 0x01, 0x08, 0x00,
+        0x07, 0x00, 0x00, 0xFE, 0x00, 0x00, 0x01, 0x00
+    ]
+    static let qscd: Bytes = [
+        0x51, 0x53, 0x43, 0x44, 0x20, 0x41, 0x70, 0x70,
+        0x6C, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E
+    ]
+    static let oberthur: Bytes = [
+        0xE8, 0x28, 0xBD, 0x08, 0x0F, 0xF2, 0x50, 0x4F,
+        0x54, 0x20, 0x41, 0x57, 0x50
+    ]
+}
 
 extension CodeType {
     fileprivate var aid: Bytes {
         switch self {
-        case .pin1: return kAID
-        case .pin2: return kAIDQSCD
-        case .puk: return kAID
+        case .pin1: return IdemiaAID.main
+        case .pin2: return IdemiaAID.qscd
+        case .puk: return IdemiaAID.main
         }
     }
     fileprivate var pinRef: UInt8 {
@@ -35,60 +35,27 @@ extension CodeType {
     }
 }
 
-final class Idemia: CardCommandsInternal {
-    let canChangePUK: Bool = true
-    let reader: CardReader
-    let fillChar: UInt8 = 0xFF
+protocol Idemia: CardCommandsInternal {
+    var authKeyRef: UInt8 { get async throws }
+    var signKeyRef: UInt8 { get async throws }
+    var authCertFile: Bytes { get async throws }
+    var signCertFile: Bytes { get async throws }
+}
 
-    required init?(reader: CardReader, aid: Bytes) {
-        guard aid == kAID else {
-            return nil
-        }
-        self.reader = reader
-    }
+extension Idemia {
+    var personalDataDF: Bytes { [0x50, 0x00] }
+    var authAlgorithm: Bytes { [0x04] }
+    var signAlgorithm: Bytes { [0x54] }
+    var decryptAlgorithm: Bytes { [0x04] }
 
-    required init?(reader: CardReader, selectAID: Bool) async {
-        self.reader = reader
-        if (selectAID) {
-            do {
-                _ = try await select(file: kAID)
-            } catch {
-                return nil
-            }
-        }
-    }
-
-    // MARK: - Public Data
-
-    func readPublicData() async throws -> CardInfo {
-        _ = try await select(file: kAID)
-        _ = try await select(p1Byte: 0x01, file: [0x50, 0x00])
-        var personalData = CardInfo()
-        for recordNr: UInt8 in 1...8 {
-            let data = try await readFile(p1Byte: 0x02, file: [0x50, recordNr])
-            let record = String(data: data, encoding: .utf8) ?? "-"
-            switch recordNr {
-            case 1: personalData.surname = record
-            case 2: personalData.givenName = record
-            case 4: personalData.citizenship = !record.isEmpty ? record : "-"
-            case 5: personalData.dateAndPlaceOfBirth = record
-            case 6: personalData.personalCode = record
-            case 7: personalData.documentNumber = record
-            case 8: personalData.dateOfExpiry = record.replacing(" ", with: ".")
-            default: break
-            }
-        }
-        return personalData
-    }
+    // MARK: - Certificates
 
     func readAuthenticationCertificate() async throws -> Data {
-        _ = try await select(file: kAID)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF1, 0x34, 0x01])
+        try await readCertificate(file: authCertFile)
     }
 
     func readSignatureCertificate() async throws -> Data {
-        _ = try await select(file: kAID)
-        return try await readFile(p1Byte: 0x09, file: [0xAD, 0xF2, 0x34, 0x1F])
+        try await readCertificate(file: signCertFile)
     }
 
     // MARK: - PIN & PUK Management
@@ -107,7 +74,8 @@ final class Idemia: CardCommandsInternal {
                 return (counter, true)
             }
         }
-        throw IdCardInternalError.invalidResponse(message: "Missing PIN counter record")
+        throw IdCardInternalError.invalidResponse(
+            message: "Missing PIN counter record for \(cardType.rawValue)")
     }
 
     func changeCode(_ type: CodeType, to code: SecureData, verifyCode: SecureData) async throws {
@@ -133,27 +101,43 @@ final class Idemia: CardCommandsInternal {
     // MARK: - Authentication & Signing
 
     func authenticate(for hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
-        _ = try await select(file: kAIDOberthur)
+        let keyRef = try await authKeyRef
+        _ = try await select(file: IdemiaAID.oberthur)
         try await verifyCode(.pin1, code: pin1)
-        try await setSecEnv(mode: 0xA4, algo: [0xFF, 0x20, 0x08, 0x00], keyRef: AUTHKEY)
-        var paddedHash = Data(repeating: 0x00, count: max(48, hash.count) - hash.count)
-        paddedHash.append(contentsOf: hash)
-        return try await reader.sendAPDU(ins: 0x88, data: paddedHash, leByte: 0x00)
+        try await setSecEnv(mode: 0xA4, algo: authAlgorithm, keyRef: keyRef)
+        return try await reader.sendAPDU(ins: 0x88, data: padWithZeroes(hash), leByte: 0x00)
     }
 
     func calculateSignature(for hash: any DataType, withPin2 pin2: SecureData) async throws -> Data {
-        _ = try await select(file: kAIDQSCD)
+        let keyRef = try await signKeyRef
+        _ = try await select(file: IdemiaAID.qscd)
         try await verifyCode(.pin2, code: pin2)
-        try await setSecEnv(mode: 0xB6, algo: [0xFF, 0x15, 0x08, 0x00], keyRef: SIGNKEY)
-        var paddedHash = Data(repeating: 0x00, count: max(48, hash.count) - hash.count)
-        paddedHash.append(contentsOf: hash)
-        return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, data: paddedHash, leByte: 0x00)
+        try await setSecEnv(mode: 0xB6, algo: signAlgorithm, keyRef: keyRef)
+        return try await reader.sendAPDU(
+            ins: 0x2A, p1Byte: 0x9E, p2Byte: 0x9A, data: padWithZeroes(hash), leByte: 0x00)
     }
 
     func decryptData(_ hash: any DataType, withPin1 pin1: SecureData) async throws -> Data {
-        _ = try await select(file: kAIDOberthur)
+        let keyRef = try await authKeyRef
+        _ = try await select(file: IdemiaAID.oberthur)
         try await verifyCode(.pin1, code: pin1)
-        try await setSecEnv(mode: 0xB8, algo: [0xFF, 0x30, 0x04, 0x00], keyRef: AUTHKEY)
+        try await setSecEnv(mode: 0xB8, algo: decryptAlgorithm, keyRef: keyRef)
         return try await reader.sendAPDU(ins: 0x2A, p1Byte: 0x80, p2Byte: 0x86, data: [0x00] + hash, leByte: 0x00)
+    }
+
+    // MARK: - Helpers
+
+    private func readCertificate(file: Bytes) async throws -> Data {
+        _ = try await select(file: IdemiaAID.main)
+        return try await readFile(p1Byte: 0x09, file: file)
+    }
+
+    /**
+     * @return zero padded hash with 48 byte length or same hash if it's longer than 48 bytes.
+     */
+    private func padWithZeroes(_ hash: any DataType) -> Data {
+        var padded = Data(repeating: 0x00, count: max(0, 48 - hash.count))
+        padded.append(contentsOf: hash)
+        return padded
     }
 }

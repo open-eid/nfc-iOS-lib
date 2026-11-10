@@ -41,24 +41,88 @@ public class NFCConnection {
         return tag
     }
 
+    /**
+     * Detect the card by ATS historical bytes and return the matching implementation.
+     *
+     * - Parameters:
+     *   - tag: The connected ISO 7816 tag.
+     *   - CAN: The card access number printed on the card.
+     *   - allowedCardTypes: required restriction on accepted card types. Use
+     *     ``CardType/allCards`` to opt in to every supported card type.
+     * - Throws: ``IdCardInternalError/cardNotSupported`` if the ATS is unknown, or the detected
+     *   card type is not in `allowedCardTypes`.
+     */
     @MainActor
-    public func getCardCommands(_: NFCTagReaderSession, tag: NFCISO7816Tag, CAN: String) async throws -> CardCommands {
-        let initialSelectedAID = tag.initialSelectedAID
-        let reader = try await CardReaderNFC(tag, CAN: CAN)
-        guard let aid = Bytes(hex: initialSelectedAID) else {
+    public func getCardCommands(
+        _: NFCTagReaderSession,
+        tag: NFCISO7816Tag,
+        CAN: String,
+        allowedCardTypes: Set<CardType> = CardType.estonianCards
+    ) async throws -> CardCommands {
+        guard let aid = Bytes(hex: tag.initialSelectedAID) else {
             throw IdCardInternalError.connectionFailed
         }
 
-        // Try Idemia with explicit AID
-        if let cmd = Idemia(reader: reader, aid: aid) {
+        if let historicalBytes = tag.historicalBytes {
+            guard let detectedCardType = CardType(historicalBytes: historicalBytes),
+                  allowedCardTypes.contains(detectedCardType) else {
+                throw IdCardInternalError.cardNotSupported
+            }
+            let reader = try await CardReaderNFC(tag, CAN: CAN)
+            return try await cardCommands(for: detectedCardType, reader: reader, aid: aid)
+        }
+
+        let reader = try await CardReaderNFC(tag, CAN: CAN)
+        let commands = try await cardCommandsBySelectedAID(reader: reader, aid: aid)
+        guard allowedCardTypes.contains(commands.cardType) else {
+            throw IdCardInternalError.cardNotSupported
+        }
+        return commands
+    }
+
+    private func cardCommands(
+        for cardType: CardType,
+        reader: CardReader,
+        aid: Bytes
+    ) async throws -> CardCommands {
+        switch cardType {
+        case .idemiaLatvia:
+            if let cmd = IdemiaLatvia(reader: reader, aid: aid) {
+                return cmd
+            }
+            if let cmd = await IdemiaLatvia(reader: reader, selectAID: true) {
+                return cmd
+            }
+        case .idemiaEstonia:
+            if let cmd = IdemiaEstonia(reader: reader, aid: aid) {
+                return cmd
+            }
+            if let cmd = await IdemiaEstonia(reader: reader, selectAID: true) {
+                return cmd
+            }
+        case .thalesEstonia:
+            if let cmd = Thales(reader: reader, aid: aid) {
+                return cmd
+            }
+            if let cmd = await Thales(reader: reader, selectAID: true) {
+                return cmd
+            }
+        }
+
+        throw IdCardInternalError.cardNotSupported
+    }
+
+    private func cardCommandsBySelectedAID(reader: CardReader, aid: Bytes) async throws -> CardCommands {
+        // Try IdemiaEstonia with explicit AID
+        if let cmd = IdemiaEstonia(reader: reader, aid: aid) {
             return cmd
         }
         // Try Thales with explicit AID
         if let cmd = Thales(reader: reader, aid: aid) {
             return cmd
         }
-        // Try Idemia selecting AID
-        if let cmd = await Idemia(reader: reader, selectAID: true) {
+        // Try IdemiaEstonia selecting AID
+        if let cmd = await IdemiaEstonia(reader: reader, selectAID: true) {
             return cmd
         }
         // Try Thales selecting AID
@@ -69,4 +133,3 @@ public class NFCConnection {
         throw IdCardInternalError.cardNotSupported
     }
 }
-
