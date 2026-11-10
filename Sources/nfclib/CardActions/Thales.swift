@@ -28,6 +28,7 @@ final class Thales: CardCommandsInternal {
     let canChangePUK: Bool = false
     let reader: CardReader
     let fillChar: UInt8 = 0x00
+    let cardType: CardType = .thalesEstonia
 
     required init?(reader: CardReader, aid: Bytes) {
         guard aid == Thales.kAIDGlobal else {
@@ -52,7 +53,7 @@ final class Thales: CardCommandsInternal {
     func readPublicData() async throws -> CardInfo {
         _ = try await select(file: Thales.kAID)
         _ = try await select(p1Byte: 0x08, file: [0xDF, 0xDD])
-        var personalData = CardInfo()
+        var personalData = CardInfo(cardType: cardType)
         for recordNr: UInt8 in 1...8 {
             let data = try await readFile(p1Byte: 0x02, file: [0x50, recordNr])
             let record = String(data: Data(data), encoding: .utf8) ?? "-"

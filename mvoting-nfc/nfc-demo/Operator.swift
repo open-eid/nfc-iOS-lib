@@ -20,9 +20,10 @@ extension Operator: CardOperations {
         NFCTagReaderSession.readingAvailable
     }
     
-    public func readPublicInfo(CAN: String) async throws -> CardInfo {
+    public func readPublicInfo(CAN: String, allowedCardTypes: Set<CardType>) async throws -> CardInfo {
         do {
-            let result = try await OperationReadPublicData().startReading(CAN: CAN)
+            let result = try await OperationReadPublicData()
+                .startReading(CAN: CAN, allowedCardTypes: allowedCardTypes)
             return result
         } catch {
             guard let e = error as? IdCardInternalError else {
@@ -32,9 +33,10 @@ extension Operator: CardOperations {
         }
     }
     
-    public func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate {
+    public func readAuthenticationCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate {
         do {
-            let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .auth)
+            let cert = try await OperationReadCertificate()
+                .startReading(CAN: CAN, certUsage: .auth, allowedCardTypes: allowedCardTypes)
             return cert
         } catch {
             guard let e = error as? IdCardInternalError else {
@@ -44,9 +46,10 @@ extension Operator: CardOperations {
         }
     }
 
-    public func readSigningCertificate(CAN: String) async throws -> SecCertificate {
+    public func readSigningCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate {
         do {
-            let cert = try await OperationReadCertificate().startReading(CAN: CAN, certUsage: .sign)
+            let cert = try await OperationReadCertificate()
+                .startReading(CAN: CAN, certUsage: .sign, allowedCardTypes: allowedCardTypes)
             return cert
         } catch {
             guard let e = error as? IdCardInternalError else {
@@ -56,9 +59,15 @@ extension Operator: CardOperations {
         }
     }
 
-    public func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData {
+    public func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String, allowedCardTypes: Set<CardType>) async throws -> WebEidData {
         do {
-            let webEidData = try await OperationAuthenticateWithWebEID(CAN: CAN, pin1: pin1, challenge: challenge, origin: origin).startReading()
+            let webEidData = try await OperationAuthenticateWithWebEID(
+                CAN: CAN,
+                pin1: pin1,
+                challenge: challenge,
+                origin: origin,
+                allowedCardTypes: allowedCardTypes
+            ).startReading()
             return webEidData
         } catch {
             guard let e = error as? IdCardInternalError else {
@@ -68,9 +77,10 @@ extension Operator: CardOperations {
         }
     }
     
-    public func sign(CAN: String, hash: Data, pin2: SecureData) async throws -> Data {
+    public func sign(CAN: String, hash: Data, pin2: SecureData, allowedCardTypes: Set<CardType>) async throws -> Data {
         do {
-            let signature = try await OperationSignHash().startSigning(CAN: CAN, PIN2: pin2, hash: hash)
+            let signature = try await OperationSignHash()
+                .startSigning(CAN: CAN, PIN2: pin2, hash: hash, allowedCardTypes: allowedCardTypes)
             return signature
         } catch {
             guard let e = error as? IdCardInternalError else {
@@ -80,9 +90,10 @@ extension Operator: CardOperations {
         }
     }
 
-    public func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData) async throws {
+    public func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws {
         do {
-            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode)
+            try await OperationUnblockPin().startReading(
+                CAN: CAN, codeType: .pin1, puk: puk, newPin: newCode, allowedCardTypes: allowedCardTypes)
         } catch {
             guard let e = error as? IdCardInternalError else {
                 throw IdCardError.sessionError
@@ -91,9 +102,10 @@ extension Operator: CardOperations {
         }
     }
 
-    public func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData) async throws {
+    public func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws {
         do {
-            try await OperationUnblockPin().startReading(CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode)
+            try await OperationUnblockPin().startReading(
+                CAN: CAN, codeType: .pin2, puk: puk, newPin: newCode, allowedCardTypes: allowedCardTypes)
         } catch {
             guard let e = error as? IdCardInternalError else {
                 throw IdCardError.sessionError

@@ -19,24 +19,30 @@ public protocol CardOperations {
 
     /// Asynchronously reads the public information from the card.
     ///
-    /// - Parameter CAN: A `String` representing the Card Access Number.
+    /// - Parameters:
+    ///   - CAN: A `String` representing the Card Access Number.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Returns: A `CardInfo` object containing the read public information.
     /// - Throws: An error if the reading fails.
-    func readPublicInfo(CAN: String) async throws -> CardInfo
+    func readPublicInfo(CAN: String, allowedCardTypes: Set<CardType>) async throws -> CardInfo
 
     /// Asynchronously reads the authentication certificate from the card.
     ///
-    /// - Parameter CAN: A `String` representing the Card Access Number.
+    /// - Parameters:
+    ///   - CAN: A `String` representing the Card Access Number.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Returns: A `SecCertificate` object representing the authentication certificate.
     /// - Throws: An error if the reading fails.
-    func readAuthenticationCertificate(CAN: String) async throws -> SecCertificate
+    func readAuthenticationCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate
 
     /// Asynchronously reads the signing certificate from the card.
     ///
-    /// - Parameter CAN: A `String` representing the Card Access Number.
+    /// - Parameters:
+    ///   - CAN: A `String` representing the Card Access Number.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Returns: A `SecCertificate` object representing the signing certificate.
     /// - Throws: An error if the reading fails.
-    func readSigningCertificate(CAN: String) async throws -> SecCertificate
+    func readSigningCertificate(CAN: String, allowedCardTypes: Set<CardType>) async throws -> SecCertificate
 
     /// Fetch data for WebEID authentication using the provided credentials and challenge.
     ///
@@ -45,9 +51,10 @@ public protocol CardOperations {
     ///   - pin1: A `String` representing PIN1.
     ///   - challenge: A `String` representing the authentication challenge.
     ///   - origin: A `String` representing the origin of the authentication request.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Returns: A `WebEidData` object containing the result of the authentication.
     /// - Throws: An error if the authentication fails.
-    func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String) async throws -> WebEidData
+    func loadWebEIDAuthenticationData(CAN: String, pin1: SecureData, challenge: String, origin: String, allowedCardTypes: Set<CardType>) async throws -> WebEidData
 
     /// Performs a signing operation using the provided hash and PIN.
     ///
@@ -55,9 +62,10 @@ public protocol CardOperations {
     ///   - CAN: A `String` representing the Card Access Number.
     ///   - hash: A `Data` object representing the hash to be signed.
     ///   - pin2: A `String` representing the second PIN.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Returns: A `Data` object containing the signature.
     /// - Throws: An error if the signing operation fails.
-    func sign(CAN: String, hash: Data, pin2: SecureData) async throws -> Data
+    func sign(CAN: String, hash: Data, pin2: SecureData, allowedCardTypes: Set<CardType>) async throws -> Data
 
     /// Unblocks a PIN1 using the PUK code.
     ///
@@ -65,8 +73,9 @@ public protocol CardOperations {
     ///   - CAN: A `String` representing the Card Access Number.
     ///   - puk: The current PUK code for verification.
     ///   - newCode: The new PIN code.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Throws: An error if the operation fails.
-    func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData) async throws
+    func unblockPin1(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws
 
     /// Unblocks a PIN2 using the PUK code.
     ///
@@ -74,6 +83,7 @@ public protocol CardOperations {
     ///   - CAN: A `String` representing the Card Access Number.
     ///   - puk: The current PUK code for verification.
     ///   - newCode: The new PIN code.
+    ///   - allowedCardTypes: The card models to accept.
     /// - Throws: An error if the operation fails.
-    func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData) async throws
+    func unblockPin2(CAN: String, puk: SecureData, newCode: SecureData, allowedCardTypes: Set<CardType>) async throws
 }
